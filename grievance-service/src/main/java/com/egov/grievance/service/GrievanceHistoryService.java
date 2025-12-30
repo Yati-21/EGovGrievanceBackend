@@ -34,4 +34,21 @@ public class GrievanceHistoryService {
         return repository.save(history)
                 .thenReturn(grievanceId);
     }
+    public Mono<Void> addHistory(
+            String grievanceId,
+            GRIEVANCE_STATUS oldStatus,
+            GRIEVANCE_STATUS newStatus,
+            String changedBy) {
+
+        GrievanceStatusHistory history =
+                GrievanceStatusHistory.builder()
+                        .grievanceId(grievanceId)
+                        .oldStatus(oldStatus)
+                        .newStatus(newStatus)
+                        .changedBy(changedBy)
+                        .changedAt(Instant.now())
+                        .build();
+
+        return repository.save(history).then();
+    }
 }

@@ -16,41 +16,77 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class GrievanceService {
 
-    private final GrievanceRepository grievanceRepository;
-    private final GrievanceHistoryService grievanceHistoryService;
-    private final ReferenceDataService referenceDataService;
+        private final GrievanceRepository grievanceRepository;
+        private final GrievanceHistoryService grievanceHistoryService;
+        private final ReferenceDataService referenceDataService;
 
-    public Mono<String> createGrievance(String userId,String role,CreateGrievanceRequest request) 
-    {
-        if (!"CITIZEN".equalsIgnoreCase(role)) {
-            return Mono.error(new IllegalArgumentException("Only CITIZEN can create grievances"));
+        public Mono<String> createGrievance(String userId, String role, CreateGrievanceRequest request) {
+                if (!"CITIZEN".equalsIgnoreCase(role)) {
+                        return Mono.error(new IllegalArgumentException("Only CITIZEN can create grievances"));
+                }
+
+                return referenceDataService
+                                .validateDepartmentAndCategory(
+                                                request.getDepartmentId(),
+                                                request.getCategoryId())
+                                .then(Mono.defer(() -> {
+
+                                        Grievance grievance = Grievance.builder()
+                                                        .citizenId(userId)
+                                                        .departmentId(request.getDepartmentId())
+                                                        .categoryId(request.getCategoryId())
+                                                        .title(request.getTitle())
+                                                        .description(request.getDescription())
+                                                        .status(GRIEVANCE_STATUS.SUBMITTED)
+                                                        .isEscalated(false)
+                                                        .createdAt(Instant.now())
+                                                        .updatedAt(Instant.now())
+                                                        .build();
+
+                                        return grievanceRepository.save(grievance);
+                                }))
+                                // add Submitted status in status history table too
+                                .flatMap(saved -> grievanceHistoryService.createInitialHistory(
+                                                saved.getId(),
+                                                userId))
+                                .map(ignored -> ignored);
         }
 
-        return referenceDataService
-                .validateDepartmentAndCategory(
-                        request.getDepartmentId(),
-                        request.getCategoryId())
-                .then(Mono.defer(() -> {
+        public Mono<Void> assignGrievance(
+                        String grievanceId,
+                        String assignedBy,
+                        String role,
+                        String officerId) {
 
-                    Grievance grievance = Grievance.builder()
-                            .citizenId(userId)
-                            .departmentId(request.getDepartmentId())
-                            .categoryId(request.getCategoryId())
-                            .title(request.getTitle())
-                            .description(request.getDescription())
-                            .status(GRIEVANCE_STATUS.SUBMITTED)
-                            .isEscalated(false)
-                            .createdAt(Instant.now())
-                            .updatedAt(Instant.now())
-                            .build();
+                if (!"ADMIN".equalsIgnoreCase(role)
+                                && !"SUPERVISOR".equalsIgnoreCase(role)) {
+                        return Mono.error(new IllegalArgumentException(
+                                        "Only ADMIN or SUPERVISOR can assign grievances"));
+                }
 
-                    return grievanceRepository.save(grievance);
-                }))
-                //add Submitted status in status history table too
-                .flatMap(saved ->
-                        grievanceHistoryService.createInitialHistory(
-                                saved.getId(),
-                                userId))
-                .map(ignored -> ignored);
-    }
+                return grievanceRepository.findById(grievanceId)
+                                .switchIfEmpty(Mono.error(
+                                                new IllegalArgumentException("Grievance not found")))
+                                .flatMap(grievance -> {
+
+                                        if (grievance.getStatus() != GRIEVANCE_STATUS.SUBMITTED
+                                                        && grievance.getStatus() != GRIEVANCE_STATUS.REOPENED) {
+                                                return Mono.error(new IllegalArgumentException(
+                                                                "Grievance cannot be assigned in current status"));
+                                        }
+
+                                        GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                                        grievance.setAssignedOfficerId(officerId);
+                                        grievance.setStatus(GRIEVANCE_STATUS.ASSIGNED);
+                                        grievance.setUpdatedAt(Instant.now());
+
+                                        return grievanceRepository.save(grievance)
+                                                        .then(grievanceHistoryService.addHistory(
+                                                                        grievanceId,
+                                                                        oldStatus,
+                                                                        GRIEVANCE_STATUS.ASSIGNED,
+                                                                        assignedBy));
+                                });
+        }
 }
