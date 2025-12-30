@@ -85,6 +85,13 @@ public class GrievanceController {
                 .thenReturn(ResponseEntity.ok(
                         Map.of("message", "Grievance closed")));
     }
-
     
+    @GetMapping("/assigned")
+    public Flux<Grievance> getAssignedGrievances(
+            @RequestHeader("X-USER-ID") String officerId,
+            @RequestHeader("X-USER-ROLE") String role) {
+
+        return grievanceService.getAssignedGrievances(officerId, role);
+    }
+
 }

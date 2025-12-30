@@ -10,6 +10,7 @@ import com.egov.grievance.model.Grievance;
 import com.egov.grievance.repository.GrievanceRepository;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -171,23 +172,19 @@ public class GrievanceService {
 
         public Mono<Void> closeGrievance(
                 String grievanceId,
-                String citizenId,
+                String userId,
                 String role) {
 
-            if (!"CITIZEN".equalsIgnoreCase(role)) {
+            if (!"ADMIN".equalsIgnoreCase(role)
+                    && !"SUPERVISOR".equalsIgnoreCase(role)) {
                 return Mono.error(new IllegalArgumentException(
-                        "Only CITIZEN can close grievance"));
+                        "Only ADMIN or SUPERVISOR can close grievance"));
             }
 
             return grievanceRepository.findById(grievanceId)
                     .switchIfEmpty(Mono.error(
                             new IllegalArgumentException("Grievance not found")))
                     .flatMap(grievance -> {
-
-                        if (!citizenId.equals(grievance.getCitizenId())) {
-                            return Mono.error(new IllegalArgumentException(
-                                    "Not your grievance"));
-                        }
 
                         if (grievance.getStatus() != GRIEVANCE_STATUS.RESOLVED) {
                             return Mono.error(new IllegalArgumentException(
@@ -204,8 +201,21 @@ public class GrievanceService {
                                         grievanceId,
                                         oldStatus,
                                         GRIEVANCE_STATUS.CLOSED,
-                                        citizenId));
+                                        userId));
                     });
+        }
+
+        
+        public Flux<Grievance> getAssignedGrievances(
+                String officerId,
+                String role) {
+
+            if (!"OFFICER".equalsIgnoreCase(role)) {
+                return Flux.error(new IllegalArgumentException(
+                        "Only OFFICER can view assigned grievances"));
+            }
+
+            return grievanceRepository.findByAssignedOfficerId(officerId);
         }
 
         
