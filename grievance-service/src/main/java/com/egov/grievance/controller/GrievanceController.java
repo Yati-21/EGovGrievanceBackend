@@ -2,6 +2,7 @@ package com.egov.grievance.controller;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.egov.grievance.dto.AssignGrievanceRequest;
 import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.model.Grievance;
+import com.egov.grievance.repository.GrievanceHistoryRepository;
 import com.egov.grievance.service.GrievanceService;
 
 import jakarta.validation.Valid;
@@ -29,6 +31,9 @@ import reactor.core.publisher.Mono;
 public class GrievanceController {
 
     private final GrievanceService grievanceService;
+    
+    @Autowired
+    private GrievanceHistoryRepository grievanceHistoryRepository;
 
     @PostMapping
     public Mono<ResponseEntity<String>> createGrievance( @RequestHeader("X-USER-ID") String userId,@RequestHeader("X-USER-ROLE") String role, @Valid @RequestBody CreateGrievanceRequest request) 
@@ -105,5 +110,25 @@ public class GrievanceController {
 
         return grievanceService.getAssignedGrievances(officerId, role);
     }
+    
+    @GetMapping("/my")
+    public Mono<ResponseEntity<?>> myGrievances(
+            @RequestHeader("X-USER-ID") String userId) {
+
+        return grievanceService
+                .getGrievancesByCitizen(userId)
+                .collectList()
+                .map(ResponseEntity::ok);
+    }
+
+    @GetMapping("/{grievanceId}/history")
+    public Mono<ResponseEntity<?>> history(@PathVariable String grievanceId) {
+
+        return grievanceHistoryRepository
+                .findByGrievanceId(grievanceId)
+                .collectList()
+                .map(ResponseEntity::ok);
+    }
+
 
 }

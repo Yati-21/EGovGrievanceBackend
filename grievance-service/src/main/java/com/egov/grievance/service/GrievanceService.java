@@ -256,6 +256,10 @@ public class GrievanceService {
 
             return grievanceRepository.findByAssignedOfficerId(officerId);
         }
+        
+        public Flux<Grievance> getGrievancesByCitizen(String citizenId) {
+            return grievanceRepository.findByCitizenId(citizenId);
+        }
 
         
 }
