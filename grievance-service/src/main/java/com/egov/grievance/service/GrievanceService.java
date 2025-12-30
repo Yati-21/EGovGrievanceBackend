@@ -205,6 +205,45 @@ public class GrievanceService {
                     });
         }
 
+        public Mono<Void> reopenGrievance(
+                String grievanceId,
+                String citizenId,
+                String role) {
+
+            if (!"CITIZEN".equalsIgnoreCase(role)) {
+                return Mono.error(new IllegalArgumentException(
+                        "Only CITIZEN can reopen grievance"));
+            }
+
+            return grievanceRepository.findById(grievanceId)
+                    .switchIfEmpty(Mono.error(
+                            new IllegalArgumentException("Grievance not found")))
+                    .flatMap(grievance -> {
+
+                        if (!citizenId.equals(grievance.getCitizenId())) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Cannot reopen someone else's grievance"));
+                        }
+
+                        if (grievance.getStatus() != GRIEVANCE_STATUS.CLOSED) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Only CLOSED grievance can be reopened"));
+                        }
+
+                        GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                        grievance.setStatus(GRIEVANCE_STATUS.REOPENED);
+                        grievance.setUpdatedAt(Instant.now());
+
+                        return grievanceRepository.save(grievance)
+                                .then(grievanceHistoryService.addHistory(
+                                        grievanceId,
+                                        oldStatus,
+                                        GRIEVANCE_STATUS.REOPENED,
+                                        citizenId));
+                    });
+        }
+
         
         public Flux<Grievance> getAssignedGrievances(
                 String officerId,

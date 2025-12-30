@@ -86,6 +86,18 @@ public class GrievanceController {
                         Map.of("message", "Grievance closed")));
     }
     
+    @PutMapping("/{grievanceId}/reopen")
+    public Mono<ResponseEntity<Map<String, String>>> reopen(
+            @PathVariable String grievanceId,
+            @RequestHeader("X-USER-ID") String userId,
+            @RequestHeader("X-USER-ROLE") String role) {
+
+        return grievanceService.reopenGrievance(grievanceId, userId, role)
+                .thenReturn(ResponseEntity.ok(
+                        Map.of("message", "Grievance reopened")));
+    }
+
+    
     @GetMapping("/assigned")
     public Flux<Grievance> getAssignedGrievances(
             @RequestHeader("X-USER-ID") String officerId,
