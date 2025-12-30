@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.egov.user.dto.LoginRequest;
+import com.egov.user.dto.LoginResponse;
 import com.egov.user.dto.RegisterRequest;
 import com.egov.user.service.UserService;
 
@@ -34,5 +36,10 @@ public class AuthController {
                         .status(HttpStatus.CREATED)
                         .body(userId)
                 );
+    }
+    
+    @PostMapping("/login")
+    public Mono<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return userService.login(request);
     }
 }

@@ -5,11 +5,14 @@ import java.time.Instant;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.egov.user.dto.LoginRequest;
+import com.egov.user.dto.LoginResponse;
 import com.egov.user.dto.RegisterRequest;
 import com.egov.user.exception.UserAlreadyExistsException;
 import com.egov.user.model.ROLE;
 import com.egov.user.model.User;
 import com.egov.user.repository.UserRepository;
+import com.egov.user.security.JwtUtil;
 
 import reactor.core.publisher.Mono;
 
@@ -18,11 +21,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final JwtUtil jwtUtil;
     public UserService(UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+		this.jwtUtil = jwtUtil;
     }
 
     public Mono<String> register(RegisterRequest request) {
@@ -49,12 +53,42 @@ public class UserService {
                         }))
                 .map(User::getId);
     }
+    public Mono<LoginResponse> login(LoginRequest request) {
+
+        return userRepository.findByEmail(request.getEmail())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Email not found")))
+                .flatMap(user -> {
+
+                    if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                        return Mono.error(new IllegalArgumentException("Incorrect Password"));
+                    }
+
+                    String token = jwtUtil.generateToken(
+                            user.getId(),
+                            user.getRole().name()
+                    );
+
+                    return Mono.just(
+                            new LoginResponse(
+                                    token,
+                                    user.getId(),
+                                    user.getRole().name()
+                            )
+                    );
+                });
+    }
+
 
     private ROLE resolveRole(String roleValue) {
         if (roleValue == null || roleValue.isBlank()) {
             return ROLE.CITIZEN;
         }
-        return ROLE.valueOf(roleValue.toUpperCase());
+
+        try {
+            return ROLE.valueOf(roleValue.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role provided");
+        }
     }
 
     private Mono<Void> validateDepartmentRuleReactive(ROLE role, String departmentId) {
