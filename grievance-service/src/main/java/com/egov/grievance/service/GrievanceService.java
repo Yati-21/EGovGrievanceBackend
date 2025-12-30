@@ -89,4 +89,124 @@ public class GrievanceService {
                                                                         assignedBy));
                                 });
         }
+        
+        public Mono<Void> markInReview(
+                String grievanceId,
+                String officerId,
+                String role) {
+
+            if (!"OFFICER".equalsIgnoreCase(role)) {
+                return Mono.error(new IllegalArgumentException(
+                        "Only OFFICER can start review"));
+            }
+
+            return grievanceRepository.findById(grievanceId)
+                    .switchIfEmpty(Mono.error(
+                            new IllegalArgumentException("Grievance not found")))
+                    .flatMap(grievance -> {
+
+                        if (!officerId.equals(grievance.getAssignedOfficerId())) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Officer not assigned to this grievance"));
+                        }
+
+                        if (grievance.getStatus() != GRIEVANCE_STATUS.ASSIGNED) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Grievance is not in ASSIGNED state"));
+                        }
+
+                        GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                        grievance.setStatus(GRIEVANCE_STATUS.IN_REVIEW);
+                        grievance.setUpdatedAt(Instant.now());
+
+                        return grievanceRepository.save(grievance)
+                                .then(grievanceHistoryService.addHistory(
+                                        grievanceId,
+                                        oldStatus,
+                                        GRIEVANCE_STATUS.IN_REVIEW,
+                                        officerId));
+                    });
+        }
+
+        public Mono<Void> resolveGrievance(
+                String grievanceId,
+                String officerId,
+                String role) {
+
+            if (!"OFFICER".equalsIgnoreCase(role)) {
+                return Mono.error(new IllegalArgumentException(
+                        "Only OFFICER can resolve grievances"));
+            }
+
+            return grievanceRepository.findById(grievanceId)
+                    .switchIfEmpty(Mono.error(
+                            new IllegalArgumentException("Grievance not found")))
+                    .flatMap(grievance -> {
+
+                        if (!officerId.equals(grievance.getAssignedOfficerId())) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Officer not assigned to this grievance"));
+                        }
+
+                        if (grievance.getStatus() != GRIEVANCE_STATUS.IN_REVIEW) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Grievance not in IN_REVIEW state"));
+                        }
+
+                        GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                        grievance.setStatus(GRIEVANCE_STATUS.RESOLVED);
+                        grievance.setResolvedAt(Instant.now());
+                        grievance.setUpdatedAt(Instant.now());
+
+                        return grievanceRepository.save(grievance)
+                                .then(grievanceHistoryService.addHistory(
+                                        grievanceId,
+                                        oldStatus,
+                                        GRIEVANCE_STATUS.RESOLVED,
+                                        officerId));
+                    });
+        }
+
+        public Mono<Void> closeGrievance(
+                String grievanceId,
+                String citizenId,
+                String role) {
+
+            if (!"CITIZEN".equalsIgnoreCase(role)) {
+                return Mono.error(new IllegalArgumentException(
+                        "Only CITIZEN can close grievance"));
+            }
+
+            return grievanceRepository.findById(grievanceId)
+                    .switchIfEmpty(Mono.error(
+                            new IllegalArgumentException("Grievance not found")))
+                    .flatMap(grievance -> {
+
+                        if (!citizenId.equals(grievance.getCitizenId())) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Not your grievance"));
+                        }
+
+                        if (grievance.getStatus() != GRIEVANCE_STATUS.RESOLVED) {
+                            return Mono.error(new IllegalArgumentException(
+                                    "Only RESOLVED grievance can be closed"));
+                        }
+
+                        GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                        grievance.setStatus(GRIEVANCE_STATUS.CLOSED);
+                        grievance.setUpdatedAt(Instant.now());
+
+                        return grievanceRepository.save(grievance)
+                                .then(grievanceHistoryService.addHistory(
+                                        grievanceId,
+                                        oldStatus,
+                                        GRIEVANCE_STATUS.CLOSED,
+                                        citizenId));
+                    });
+        }
+
+        
 }

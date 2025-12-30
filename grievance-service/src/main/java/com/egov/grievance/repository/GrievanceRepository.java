@@ -11,4 +11,7 @@ public interface GrievanceRepository extends ReactiveMongoRepository<Grievance, 
 	Flux<Grievance> findByCitizenId(String citizenId);
 
 	Flux<Grievance> findByDepartmentId(String departmentId);
+	
+	Flux<Grievance> findByAssignedOfficerId(String officerId);
+
 }
