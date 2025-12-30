@@ -1,0 +1,13 @@
+{
+  "departments": {
+    "D001": {
+      "name": "Water Supply",
+      "categories": {
+        "C101": {
+          "name": "Leakage",
+          "slaHours": 48
+        }
+      }
+    }
+  }
+}
