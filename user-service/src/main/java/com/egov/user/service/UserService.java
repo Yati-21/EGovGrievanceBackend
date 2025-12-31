@@ -14,6 +14,7 @@ import com.egov.user.model.User;
 import com.egov.user.repository.UserRepository;
 import com.egov.user.security.JwtUtil;
 
+import jakarta.annotation.PostConstruct;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -78,6 +79,21 @@ public class UserService {
                 });
     }
 
+    @PostConstruct
+    public void createDefaultAdmin() {
+        userRepository.findByEmail("admin@egov.com")
+                .switchIfEmpty(Mono.defer(() -> {
+                    User admin = User.builder()
+                            .name("Admin")
+                            .email("admin@egov.com")
+                            .passwordHash(passwordEncoder.encode("Admin@123"))
+                            .role(ROLE.ADMIN)
+                            .createdAt(Instant.now())
+                            .build();
+                    return userRepository.save(admin);
+                }))
+                .subscribe();
+    }
 
     private ROLE resolveRole(String roleValue) {
         if (roleValue == null || roleValue.isBlank()) {
@@ -95,8 +111,7 @@ public class UserService {
 
         if ((role == ROLE.OFFICER || role == ROLE.SUPERVISOR)
                 && (departmentId == null || departmentId.isBlank())) {
-            return Mono.error(new IllegalArgumentException(
-                    "departmentId is mandatory for OFFICER and SUPERVISOR"));
+            return Mono.error(new IllegalArgumentException("departmentId is mandatory for OFFICER and SUPERVISOR"));
         }
         return Mono.empty();
     }

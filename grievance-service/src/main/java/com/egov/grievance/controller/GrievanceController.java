@@ -18,6 +18,7 @@ import com.egov.grievance.dto.AssignGrievanceRequest;
 import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.model.Grievance;
 import com.egov.grievance.repository.GrievanceHistoryRepository;
+import com.egov.grievance.repository.GrievanceRepository;
 import com.egov.grievance.service.GrievanceService;
 
 import jakarta.validation.Valid;
@@ -34,6 +35,9 @@ public class GrievanceController {
     
     @Autowired
     private GrievanceHistoryRepository grievanceHistoryRepository;
+
+    @Autowired
+    private GrievanceRepository grievanceRepository;
 
     @PostMapping
     public Mono<ResponseEntity<String>> createGrievance( @RequestHeader("X-USER-ID") String userId,@RequestHeader("X-USER-ROLE") String role, @Valid @RequestBody CreateGrievanceRequest request) 
@@ -130,5 +134,13 @@ public class GrievanceController {
                 .map(ResponseEntity::ok);
     }
 
+   @GetMapping("/citizen/{citizenId}")
+   public Flux<Grievance> getByCitizen(@PathVariable String citizenId) {
+       return grievanceRepository.findByCitizenId(citizenId);
+   }
 
+   @GetMapping("/department/{departmentId}")
+   public Flux<Grievance> getByDepartment(@PathVariable String departmentId) {
+       return grievanceRepository.findByDepartmentId(departmentId);
+   }
 }
