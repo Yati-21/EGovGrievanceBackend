@@ -27,4 +27,21 @@ public class ReferenceDataService {
         }
         return Mono.empty();
     }
+    
+    public Mono<Integer> getSlaHours(String departmentId, String categoryId) {
+        return Mono.fromCallable(() ->
+                config.getSlaHours(departmentId, categoryId));
+    }
+    public Mono<Void> validateDepartmentOnly(String departmentId) {
+
+        boolean valid = config.isValidDepartment(departmentId);
+
+        if (!valid) {
+            return Mono.error(
+                new IllegalArgumentException("Invalid department"));
+        }
+        return Mono.empty();
+    }
+
+
 }

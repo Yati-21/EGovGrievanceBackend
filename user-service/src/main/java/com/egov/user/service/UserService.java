@@ -1,9 +1,12 @@
 package com.egov.user.service;
 
 import java.time.Instant;
+import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.http.HttpStatusCode;
 
 import com.egov.user.dto.LoginRequest;
 import com.egov.user.dto.LoginResponse;
@@ -23,11 +26,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    public UserService(UserRepository userRepository,
-            PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    private final WebClient.Builder webClientBuilder;
+
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            WebClient.Builder webClientBuilder) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-		this.jwtUtil = jwtUtil;
+        this.jwtUtil = jwtUtil;
+        this.webClientBuilder = webClientBuilder;
     }
 
     public Mono<String> register(RegisterRequest request) {
@@ -40,7 +50,9 @@ public class UserService {
                             ROLE role = resolveRole(request.getRole());
 
                             return validateDepartmentRuleReactive(role, request.getDepartmentId())
+                                    .then(validateDepartmentFromGrievanceService(role, request.getDepartmentId()))
                                     .then(Mono.fromCallable(() -> {
+
                                         return User.builder()
                                                 .name(request.getName())
                                                 .email(request.getEmail())
@@ -51,9 +63,11 @@ public class UserService {
                                                 .build();
                                     }))
                                     .flatMap(user -> userRepository.save(user));
+
                         }))
                 .map(User::getId);
     }
+
     public Mono<LoginResponse> login(LoginRequest request) {
 
         return userRepository.findByEmail(request.getEmail())
@@ -66,16 +80,13 @@ public class UserService {
 
                     String token = jwtUtil.generateToken(
                             user.getId(),
-                            user.getRole().name()
-                    );
+                            user.getRole().name());
 
                     return Mono.just(
                             new LoginResponse(
                                     token,
                                     user.getId(),
-                                    user.getRole().name()
-                            )
-                    );
+                                    user.getRole().name()));
                 });
     }
 
@@ -115,4 +126,24 @@ public class UserService {
         }
         return Mono.empty();
     }
+
+    private Mono<Void> validateDepartmentFromGrievanceService(
+            ROLE role,
+            String departmentId) {
+
+        // Only OFFICER & SUPERVISOR need department validation
+        if (role == ROLE.OFFICER || role == ROLE.SUPERVISOR) {
+            return webClientBuilder.build()
+                    .get()
+                    .uri("http://grievance-service/reference/departments/{id}/validate", departmentId)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(Map.class)
+                            .flatMap(error -> Mono.error(new IllegalArgumentException(
+                                    (String) error.getOrDefault("error", "Invalid department")))))
+                    .bodyToMono(Void.class);
+        }
+
+        return Mono.empty();
+    }
+
 }

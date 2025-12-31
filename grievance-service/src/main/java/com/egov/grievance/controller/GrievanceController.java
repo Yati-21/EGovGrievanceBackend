@@ -143,4 +143,19 @@ public class GrievanceController {
    public Flux<Grievance> getByDepartment(@PathVariable String departmentId) {
        return grievanceRepository.findByDepartmentId(departmentId);
    }
+   
+   
+   @PutMapping("/{grievanceId}/escalate")
+   public Mono<ResponseEntity<Map<String, String>>> escalate(
+           @PathVariable String grievanceId,
+           @RequestHeader("X-USER-ID") String userId,
+           @RequestHeader("X-USER-ROLE") String role) {
+
+       return grievanceService
+               .escalateGrievance(grievanceId, userId, role)
+               .thenReturn(ResponseEntity.ok(
+                       Map.of("message", "Grievance escalated")));
+   }
+
+   
 }

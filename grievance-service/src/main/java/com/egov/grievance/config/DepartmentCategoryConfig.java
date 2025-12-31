@@ -36,4 +36,34 @@ public class DepartmentCategoryConfig {
                 && ((Map<?, ?>) departments.get(departmentId).get("categories"))
                    .containsKey(categoryId);
     }
+
+    public boolean isValidDepartment(String departmentId) {
+    	if (departments == null) {
+    		return false;
+    	}
+    	return departments.containsKey(departmentId);
+    }
+    
+    public Integer getSlaHours(String departmentId, String categoryId) {
+
+        if (departments == null || !departments.containsKey(departmentId)) {
+            throw new IllegalArgumentException("Invalid department");
+        }
+
+        Map<String, Object> dept = departments.get(departmentId);
+        Map<String, Object> categories = (Map<String, Object>) dept.get("categories");
+
+        if (!categories.containsKey(categoryId)) {
+            throw new IllegalArgumentException("Invalid category");
+        }
+
+        Map<String, Object> category =
+                (Map<String, Object>) categories.get(categoryId);
+
+        return (Integer) category.get("slaHours");
+    }
+
+
+
+
 }
