@@ -16,6 +16,7 @@ import com.egov.user.service.UserService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/users")
@@ -55,23 +56,27 @@ public class UserController {
                         .departmentId(user.getDepartmentId())
                         .build());
     }
-    
+
     @PutMapping("/{userId}")
+    @PreAuthorize("#userId == authentication.principal")
     public Mono<UserResponse> updateProfile(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
         return userService.updateProfile(userId, request);
     }
-    
+
     @PutMapping("/{userId}/role/{role}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<UserResponse> updateUserRole(@PathVariable String userId, @PathVariable String role) {
         return userService.updateRole(userId, role);
     }
-    
+
     @PutMapping("/{userId}/department/{departmentId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<UserResponse> assignDepartment(@PathVariable String userId, @PathVariable String departmentId) {
         return userService.updateDepartment(userId, departmentId);
     }
-    
+
     @GetMapping("/role/{role}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Flux<UserResponse> getUsersByRole(@PathVariable String role) {
         return userService.getUsersByRole(role);
     }
