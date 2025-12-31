@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.egov.user.dto.UserResponse;
 import com.egov.user.model.ROLE;
 import com.egov.user.model.User;
 import com.egov.user.repository.UserRepository;
@@ -36,10 +37,10 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public Mono<com.egov.user.dto.UserResponse> getUserById(@PathVariable String id) {
+    public Mono<UserResponse> getUserById(@PathVariable String id) {
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new com.egov.user.exception.ResourceNotFoundException("User not found")))
-                .map(user -> com.egov.user.dto.UserResponse.builder()
+                .map(user -> UserResponse.builder()
                         .id(user.getId())
                         .name(user.getName())
                         .email(user.getEmail())
