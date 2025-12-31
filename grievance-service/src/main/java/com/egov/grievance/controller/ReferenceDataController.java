@@ -1,5 +1,7 @@
 package com.egov.grievance.controller;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +20,19 @@ public class ReferenceDataController {
 
     public ReferenceDataController(ReferenceDataService referenceDataService) {
         this.referenceDataService = referenceDataService;
+    }
+    
+    @GetMapping("/departments")
+    public Mono<ResponseEntity<Map<String, Map<String, Object>>>> getAllDepartments() {
+        return referenceDataService.getAllDepartments()
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+    
+    @GetMapping("/departments/{departmentId}/categories")
+    public Mono<ResponseEntity<Map<String, Object>>> getCategories(@PathVariable String departmentId) {
+        return referenceDataService.getCategoriesByDepartment(departmentId)
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/departments/{departmentId}/validate")

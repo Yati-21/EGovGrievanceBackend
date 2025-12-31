@@ -21,7 +21,7 @@ public class JwtAuthFilter implements GlobalFilter {
 		this.jwtUtil = jwtUtil;
 	}
 
-	private static final List<String> PUBLIC_PATHS = List.of("/auth/login", "/auth/register");
+	private static final List<String> PUBLIC_PATHS = List.of("/auth/login", "/auth/register", "/reference");
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
