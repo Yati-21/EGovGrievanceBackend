@@ -8,28 +8,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(WebExchangeBindException.class)
-	public ResponseEntity<Map<String, String>> handleValidation(WebExchangeBindException ex) {
+        @ExceptionHandler(WebExchangeBindException.class)
+        public ResponseEntity<Map<String, String>> handleValidation(WebExchangeBindException ex) {
 
-		Map<String, String> errors = new HashMap<>();
-		ex.getFieldErrors().forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
+                Map<String, String> errors = new HashMap<>();
+                ex.getFieldErrors().forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
-	}
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        }
 
-	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<Map<String, String>> handleIllegal(IllegalArgumentException ex) {
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<Map<String, String>> handleIllegal(IllegalArgumentException ex) {
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
-	}
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        }
 
-	@ExceptionHandler(UserNotFoundException.class)
-	public ResponseEntity<Map<String, String>> handleUserNotFound(UserNotFoundException ex) {
+        @ExceptionHandler(UserNotFoundException.class)
+        public ResponseEntity<Map<String, String>> handleUserNotFound(UserNotFoundException ex) {
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
-	}
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        }
+
+        @ExceptionHandler(ResponseStatusException.class)
+        public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+                return ResponseEntity.status(ex.getStatusCode())
+                                .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Error occurred"));
+        }
 }

@@ -406,23 +406,35 @@ public class GrievanceService {
                         .bodyToMono(UserResponse.class);
         }
         public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId) {
-            return grievanceDocumentRepository.findByGrievanceId(grievanceId);
+            return grievanceRepository.existsById(grievanceId)
+                    .flatMapMany(exists -> {
+                        if (!exists) {
+                            return Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Grievance not found"));
+                        }
+                        return grievanceDocumentRepository.findByGrievanceId(grievanceId);
+                    });
         }
 
         public Mono<Resource> downloadDocument(String grievanceId, String documentId) {
-            return grievanceDocumentRepository.findById(documentId)
-                    .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")))
-                    .flatMap(doc -> {
-                        if (!doc.getGrievanceId().equals(grievanceId)) {
-                            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document does not belong to this grievance"));
+            return grievanceRepository.existsById(grievanceId)
+                    .flatMap(exists -> {
+                        if (!exists) {
+                            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Grievance not found"));
                         }
-                        Path path = Paths.get(doc.getFilePath());
-                        Resource resource = new FileSystemResource(path);
-                        if (resource.exists() && resource.isReadable()) {
-                            return Mono.just(resource);
-                        } else {
-                            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found on server"));
-                        }
+                        return grievanceDocumentRepository.findById(documentId)
+                                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")))
+                                .flatMap(doc -> {
+                                    if (!doc.getGrievanceId().equals(grievanceId)) {
+                                        return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document does not belong to this grievance"));
+                                    }
+                                    Path path = Paths.get(doc.getFilePath());
+                                    Resource resource = new FileSystemResource(path);
+                                    if (resource.exists() && resource.isReadable()) {
+                                        return Mono.just(resource);
+                                    } else {
+                                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found on server"));
+                                    }
+                                });
                     });
         }
 }
