@@ -47,5 +47,5 @@ public class UserController {
                         .departmentId(user.getDepartmentId())
                         .build());
     }
-
+    
 }

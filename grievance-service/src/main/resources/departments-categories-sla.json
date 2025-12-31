@@ -6,6 +6,94 @@
         "C101": {
           "name": "Leakage",
           "slaHours": 48
+        },
+        "C102": {
+          "name": "No Water Supply",
+          "slaHours": 24
+        },
+        "C103": {
+          "name": "Contaminated Water",
+          "slaHours": 24
+        }
+      }
+    },
+    "D002": {
+      "name": "Electricity",
+      "categories": {
+        "C201": {
+          "name": "Power Outage",
+          "slaHours": 24
+        },
+        "C202": {
+          "name": "Meter Fault",
+          "slaHours": 72
+        },
+        "C203": {
+          "name": "New Connection Delay",
+          "slaHours": 120
+        },
+        "C204": {
+          "name": "Voltage Fluctuation",
+          "slaHours": 48
+        }
+      }
+    },
+    "D003": {
+      "name": "Roads & Infrastructure",
+      "categories": {
+        "C301": {
+          "name": "Potholes",
+          "slaHours": 168
+        },
+        "C302": {
+          "name": "Street Light Not Working",
+          "slaHours": 48
+        },
+        "C303": {
+          "name": "Illegal Encroachment",
+          "slaHours": 336
+        },
+        "C304": {
+          "name": "Damaged Footpath",
+          "slaHours": 168
+        }
+      }
+    },
+    "D004": {
+      "name": "Sanitation",
+      "categories": {
+        "C401": {
+          "name": "Garbage Not Collected",
+          "slaHours": 24
+        },
+        "C402": {
+          "name": "Blocked Drain/Sewage",
+          "slaHours": 48
+        },
+        "C403": {
+          "name": "Dead Animal Removal",
+          "slaHours": 12
+        },
+        "C404": {
+          "name": "Public Toilet Cleaning",
+          "slaHours": 24
+        }
+      }
+    },
+    "D005": {
+      "name": "Health",
+      "categories": {
+        "C501": {
+          "name": "Hospital Staff Negligence",
+          "slaHours": 72
+        },
+        "C502": {
+          "name": "Unavailability of Medicines",
+          "slaHours": 48
+        },
+        "C503": {
+          "name": "Ambulance Delay",
+          "slaHours": 24
         }
       }
     }

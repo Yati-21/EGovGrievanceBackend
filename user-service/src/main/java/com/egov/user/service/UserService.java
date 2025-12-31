@@ -137,9 +137,9 @@ public class UserService {
                     .get()
                     .uri("http://grievance-service/reference/departments/{id}/validate", departmentId)
                     .retrieve()
-                    .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(Map.class)
-                            .flatMap(error -> Mono.error(new IllegalArgumentException(
-                                    (String) error.getOrDefault("error", "Invalid department")))))
+                    .onStatus(
+                            HttpStatusCode::is4xxClientError,
+                            response -> Mono.error(new IllegalArgumentException("Invalid department")))
                     .bodyToMono(Void.class);
         }
 

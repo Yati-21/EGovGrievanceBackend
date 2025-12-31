@@ -85,15 +85,9 @@ public class GrievanceService {
                                         // If assigned by SUPERVISOR, validate their department
                                         Mono<Void> supervisorValidation;
                                         if ("SUPERVISOR".equalsIgnoreCase(role)) {
-                                                supervisorValidation = webClientBuilder.build()
-                                                                .get()
-                                                                .uri("http://user-service/users/{id}", assignedBy)
-                                                                .retrieve()
-                                                                .onStatus(status -> status.value() == 404,
-                                                                                response -> Mono.error(
-                                                                                                new UserNotFoundException(
-                                                                                                                "Assigned By user not found")))
-                                                                .bodyToMono(UserResponse.class)
+
+                                                supervisorValidation = fetchUserById(assignedBy,
+                                                                "Assigned By user not found")
                                                                 .flatMap(supervisor -> {
                                                                         if (!grievance.getDepartmentId()
                                                                                         .equals(supervisor
@@ -109,16 +103,8 @@ public class GrievanceService {
                                         }
 
                                         // Validate Officer
-                                        Mono<Void> officerValidation = webClientBuilder.build()
-                                                        .get()
-                                                        .uri("http://user-service/users/{id}", officerId)
-                                                        .retrieve()
-                                                        .onStatus(status -> status.value() == 404,
-                                                                        response -> Mono.error(
-                                                                                        new UserNotFoundException(
-                                                                                                        "Officer not found with id: "
-                                                                                                                        + officerId)))
-                                                        .bodyToMono(UserResponse.class)
+                                        Mono<Void> officerValidation = fetchUserById(officerId,
+                                                        "Officer not found with id: " + officerId)
                                                         .flatMap(officer -> {
                                                                 if (!"OFFICER".equalsIgnoreCase(officer.getRole())) {
                                                                         return Mono.error(new IllegalArgumentException(
@@ -414,6 +400,16 @@ public class GrievanceService {
                                                                                 });
                                                         });
                                 });
+        }
+
+        private Mono<UserResponse> fetchUserById(String userId, String errorMessage) {
+                return webClientBuilder.build()
+                                .get()
+                                .uri("http://user-service/users/{id}", userId)
+                                .retrieve()
+                                .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
+                                                response -> Mono.error(new IllegalArgumentException(errorMessage)))
+                                .bodyToMono(UserResponse.class);
         }
 
 }
