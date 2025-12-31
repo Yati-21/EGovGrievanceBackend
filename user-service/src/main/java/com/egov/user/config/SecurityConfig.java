@@ -2,6 +2,7 @@ package com.egov.user.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -24,14 +25,15 @@ public class SecurityConfig {
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
         filter.setServerAuthenticationConverter(authenticationConverter);
 
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth/**").permitAll()
-                        .anyExchange().authenticated())
-                .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
-                .httpBasic(basic -> basic.disable())
-                .formLogin(login -> login.disable());
+        http.csrf(csrf -> csrf.disable())
+            .authorizeExchange(exchanges -> exchanges
+                    .pathMatchers("/auth/**").permitAll()
+                    .pathMatchers(HttpMethod.GET, "/users/*").permitAll() // Allow get user by ID
+                    .pathMatchers(HttpMethod.GET, "/users/supervisor/**").permitAll() // Allow internal supervisor fetch
+                    .anyExchange().authenticated())
+            .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
+            .httpBasic(basic -> basic.disable())
+            .formLogin(login -> login.disable());
 
         return http.build();
     }
