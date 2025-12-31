@@ -21,10 +21,8 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-    
-	//INTERNAL API
-	//Used by grievance-service during escalation
-     
+    // INTERNAL API
+    // Used by grievance-service during escalation
     @GetMapping("/supervisor/department/{departmentId}")
     public Mono<String> getSupervisorByDepartment(
             @PathVariable String departmentId) {
@@ -36,5 +34,18 @@ public class UserController {
                         new IllegalArgumentException(
                                 "Supervisor not found for department " + departmentId)));
     }
-    
+
+    @GetMapping("/{id}")
+    public Mono<com.egov.user.dto.UserResponse> getUserById(@PathVariable String id) {
+        return userRepository.findById(id)
+                .switchIfEmpty(Mono.error(new com.egov.user.exception.ResourceNotFoundException("User not found")))
+                .map(user -> com.egov.user.dto.UserResponse.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .role(user.getRole())
+                        .departmentId(user.getDepartmentId())
+                        .build());
+    }
+
 }

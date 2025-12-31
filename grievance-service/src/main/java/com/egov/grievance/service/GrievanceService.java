@@ -5,6 +5,8 @@ import java.time.Instant;
 import org.springframework.stereotype.Service;
 
 import com.egov.grievance.dto.CreateGrievanceRequest;
+import com.egov.grievance.dto.UserResponse;
+import com.egov.grievance.exception.UserNotFoundException;
 import com.egov.grievance.model.GRIEVANCE_STATUS;
 import com.egov.grievance.model.Grievance;
 import com.egov.grievance.repository.GrievanceRepository;
@@ -80,18 +82,73 @@ public class GrievanceService {
                                                                 "Grievance cannot be assigned in current status"));
                                         }
 
-                                        GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+                                        // If assigned by SUPERVISOR, validate their department
+                                        Mono<Void> supervisorValidation;
+                                        if ("SUPERVISOR".equalsIgnoreCase(role)) {
+                                                supervisorValidation = webClientBuilder.build()
+                                                                .get()
+                                                                .uri("http://user-service/users/{id}", assignedBy)
+                                                                .retrieve()
+                                                                .onStatus(status -> status.value() == 404,
+                                                                                response -> Mono.error(
+                                                                                                new UserNotFoundException(
+                                                                                                                "Assigned By user not found")))
+                                                                .bodyToMono(UserResponse.class)
+                                                                .flatMap(supervisor -> {
+                                                                        if (!grievance.getDepartmentId()
+                                                                                        .equals(supervisor
+                                                                                                        .getDepartmentId())) {
+                                                                                return Mono.error(
+                                                                                                new IllegalArgumentException(
+                                                                                                                "Supervisor can only assign grievances for their own department"));
+                                                                        }
+                                                                        return Mono.empty();
+                                                                });
+                                        } else {
+                                                supervisorValidation = Mono.empty();
+                                        }
 
-                                        grievance.setAssignedOfficerId(officerId);
-                                        grievance.setStatus(GRIEVANCE_STATUS.ASSIGNED);
-                                        grievance.setUpdatedAt(Instant.now());
+                                        // Validate Officer
+                                        Mono<Void> officerValidation = webClientBuilder.build()
+                                                        .get()
+                                                        .uri("http://user-service/users/{id}", officerId)
+                                                        .retrieve()
+                                                        .onStatus(status -> status.value() == 404,
+                                                                        response -> Mono.error(
+                                                                                        new UserNotFoundException(
+                                                                                                        "Officer not found with id: "
+                                                                                                                        + officerId)))
+                                                        .bodyToMono(UserResponse.class)
+                                                        .flatMap(officer -> {
+                                                                if (!"OFFICER".equalsIgnoreCase(officer.getRole())) {
+                                                                        return Mono.error(new IllegalArgumentException(
+                                                                                        "Assigned user is not an OFFICER"));
+                                                                }
+                                                                if (!grievance.getDepartmentId()
+                                                                                .equals(officer.getDepartmentId())) {
+                                                                        return Mono.error(new IllegalArgumentException(
+                                                                                        "Officer does not belong to the grievance department"));
+                                                                }
+                                                                return Mono.empty();
+                                                        });
 
-                                        return grievanceRepository.save(grievance)
-                                                        .then(grievanceHistoryService.addHistory(
-                                                                        grievanceId,
-                                                                        oldStatus,
-                                                                        GRIEVANCE_STATUS.ASSIGNED,
-                                                                        assignedBy));
+                                        return supervisorValidation
+                                                        .then(officerValidation)
+                                                        .then(Mono.defer(() -> {
+                                                                GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                                                                grievance.setAssignedOfficerId(officerId);
+                                                                grievance.setStatus(GRIEVANCE_STATUS.ASSIGNED);
+                                                                grievance.setUpdatedAt(Instant.now());
+
+                                                                return grievanceRepository.save(grievance)
+                                                                                .then(grievanceHistoryService
+                                                                                                .addHistory(
+                                                                                                                grievanceId,
+                                                                                                                oldStatus,
+                                                                                                                GRIEVANCE_STATUS.ASSIGNED,
+                                                                                                                assignedBy));
+                                                        }));
                                 });
         }
 
@@ -350,8 +407,7 @@ public class GrievanceService {
                                                                                         return grievanceRepository
                                                                                                         .save(grievance)
                                                                                                         .then(grievanceHistoryService
-                                                                                                                        .addHistory(
-                                                                                                                                        grievanceId,
+                                                                                                                        .addHistory(grievanceId,
                                                                                                                                         oldStatus,
                                                                                                                                         GRIEVANCE_STATUS.ESCALATED,
                                                                                                                                         citizenId));
