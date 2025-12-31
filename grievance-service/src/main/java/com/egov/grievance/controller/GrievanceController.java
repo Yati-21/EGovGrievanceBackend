@@ -24,6 +24,11 @@ import com.egov.grievance.repository.GrievanceHistoryRepository;
 import com.egov.grievance.repository.GrievanceRepository;
 import com.egov.grievance.service.GrievanceService;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import com.egov.grievance.model.GrievanceDocument;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -163,6 +168,23 @@ public class GrievanceController {
                 return grievanceRepository.findById(grievanceId)
                                 .map(ResponseEntity::ok)
                                 .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+        }
+        
+        @GetMapping("/{grievanceId}/documents")
+        public Flux<GrievanceDocument> getGrievanceDocuments(@PathVariable String grievanceId) {
+            return grievanceService.getGrievanceDocuments(grievanceId);
+        }
+
+        @GetMapping("/{grievanceId}/documents/{documentId}")
+        public Mono<ResponseEntity<Resource>> downloadDocument(
+                @PathVariable String grievanceId,
+                @PathVariable String documentId) {
+            return grievanceService.downloadDocument(grievanceId, documentId)
+                    .map(resource -> ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION,
+                                    "attachment; filename=\"" + resource.getFilename() + "\"")
+                            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                            .body(resource));
         }
 
 }

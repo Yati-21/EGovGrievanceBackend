@@ -7,7 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.dto.UserResponse;
 import com.egov.grievance.exception.UserNotFoundException;
@@ -333,64 +336,64 @@ public class GrievanceService {
 
         public Mono<Void> escalateGrievance(String grievanceId,String citizenId,String role) 
         {
-                if (!"CITIZEN".equalsIgnoreCase(role)) {
-                        return Mono.error(new IllegalArgumentException("Only CITIZEN can escalate grievance"));
-                }
+            if (!"CITIZEN".equalsIgnoreCase(role)) {
+                    return Mono.error(new IllegalArgumentException("Only CITIZEN can escalate grievance"));
+            }
 
-                return grievanceRepository.findById(grievanceId)
-                        .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
-                        .flatMap(grievance -> 
+            return grievanceRepository.findById(grievanceId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
+                .flatMap(grievance -> 
+                {
+                    if (!citizenId.equals(grievance.getCitizenId())) {
+                            return Mono.error(new IllegalArgumentException("Cannot escalate someone else's grievance"));
+                    }
+                    if (grievance.getStatus() == GRIEVANCE_STATUS.RESOLVED
+                                    || grievance.getStatus() == GRIEVANCE_STATUS.CLOSED) {
+                            return Mono.error(new IllegalArgumentException("Cannot escalate resolved or closed grievance"));
+                    }
+                    if (Boolean.TRUE.equals(grievance.getIsEscalated())) {
+                            return Mono.error(new IllegalArgumentException("Grievance already escalated"));
+                    }
+                    //SLA check
+                    return referenceDataService
+                        .getSlaHours(grievance.getDepartmentId(),
+                                     grievance.getCategoryId())
+                        .flatMap(slaHours -> 
                         {
-                                if (!citizenId.equals(grievance.getCitizenId())) {
-                                        return Mono.error(new IllegalArgumentException("Cannot escalate someone else's grievance"));
+                                long hoursElapsed = Duration
+                                                .between(grievance.getCreatedAt(),Instant.now())
+                                                .toHours();
+
+                                if (hoursElapsed <= slaHours) 
+                                {
+                                        return Mono.error(new IllegalArgumentException("SLA not breached yet"));
                                 }
-                                if (grievance.getStatus() == GRIEVANCE_STATUS.RESOLVED
-                                                || grievance.getStatus() == GRIEVANCE_STATUS.CLOSED) {
-                                        return Mono.error(new IllegalArgumentException("Cannot escalate resolved or closed grievance"));
-                                }
-                                if (Boolean.TRUE.equals(grievance.getIsEscalated())) {
-                                        return Mono.error(new IllegalArgumentException("Grievance already escalated"));
-                                }
-                                //SLA check
-                                return referenceDataService
-                                    .getSlaHours(grievance.getDepartmentId(),
-                                                 grievance.getCategoryId())
-                                    .flatMap(slaHours -> 
+
+                                GRIEVANCE_STATUS oldStatus = grievance.getStatus();
+
+                                return webClientBuilder.build()
+                                    .get()
+                                    .uri("http://user-service/users/supervisor/department/{departmentId}",
+                                                    grievance.getDepartmentId())
+                                    .retrieve()
+                                    .bodyToMono(String.class)
+                                    .flatMap(supervisorId -> 
                                     {
-                                            long hoursElapsed = Duration
-                                                            .between(grievance.getCreatedAt(),Instant.now())
-                                                            .toHours();
+                                            grievance.setStatus(GRIEVANCE_STATUS.ESCALATED);
+                                            grievance.setIsEscalated(true);
+                                            grievance.setAssignedOfficerId(supervisorId);
+                                            grievance.setUpdatedAt(Instant.now());
 
-                                            if (hoursElapsed <= slaHours) 
-                                            {
-                                                    return Mono.error(new IllegalArgumentException("SLA not breached yet"));
-                                            }
-
-                                            GRIEVANCE_STATUS oldStatus = grievance.getStatus();
-
-                                            return webClientBuilder.build()
-                                                    .get()
-                                                    .uri("http://user-service/users/supervisor/department/{departmentId}",
-                                                                    grievance.getDepartmentId())
-                                                    .retrieve()
-                                                    .bodyToMono(String.class)
-                                                    .flatMap(supervisorId -> 
-                                                    {
-                                                            grievance.setStatus(GRIEVANCE_STATUS.ESCALATED);
-                                                            grievance.setIsEscalated(true);
-                                                            grievance.setAssignedOfficerId(supervisorId);
-                                                            grievance.setUpdatedAt(Instant.now());
-
-                                                            return grievanceRepository
-                                                                            .save(grievance)
-                                                                            .then(grievanceHistoryService
-                                                                                            .addHistory(grievanceId,
-                                                                                                            oldStatus,
-                                                                                                            GRIEVANCE_STATUS.ESCALATED,
-                                                                                                            citizenId));
-                                                    });
+                                            return grievanceRepository
+                                                            .save(grievance)
+                                                            .then(grievanceHistoryService
+                                                                            .addHistory(grievanceId,
+                                                                                            oldStatus,
+                                                                                            GRIEVANCE_STATUS.ESCALATED,
+                                                                                            citizenId));
                                     });
                         });
+                });
         }
 
         private Mono<UserResponse> fetchUserById(String userId, String errorMessage) {
@@ -402,5 +405,24 @@ public class GrievanceService {
                                         response -> Mono.error(new IllegalArgumentException(errorMessage)))
                         .bodyToMono(UserResponse.class);
         }
+        public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId) {
+            return grievanceDocumentRepository.findByGrievanceId(grievanceId);
+        }
 
+        public Mono<Resource> downloadDocument(String grievanceId, String documentId) {
+            return grievanceDocumentRepository.findById(documentId)
+                    .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")))
+                    .flatMap(doc -> {
+                        if (!doc.getGrievanceId().equals(grievanceId)) {
+                            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document does not belong to this grievance"));
+                        }
+                        Path path = Paths.get(doc.getFilePath());
+                        Resource resource = new FileSystemResource(path);
+                        if (resource.exists() && resource.isReadable()) {
+                            return Mono.just(resource);
+                        } else {
+                            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found on server"));
+                        }
+                    });
+        }
 }
