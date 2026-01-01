@@ -19,74 +19,88 @@ public class GrievanceStatusConsumer {
     private final EmailService emailService;
     private final WebClient.Builder webClientBuilder;
 
-    //cmd to list topics: docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --list
-    @KafkaListener(
-    	    topics = "grievance-status-changed",
-    	    groupId = "notification-service"
-    	)
-	public void consume(GrievanceStatusChangedEvent event) {
+    // cmd to list topics: docker exec -it kafka kafka-topics --bootstrap-server
+    // localhost:9092 --list
+    @KafkaListener(topics = "grievance-status-changed", groupId = "notification-service")
+    public void consume(GrievanceStatusChangedEvent event) {
 
-	    log.info("Received grievance event: {}", event);
+        log.info("Received grievance event: {}", event);
 
-	    //always notify citizen
-	    notifyUserById(
-	        event.getCitizenId(),
-	        event.getGrievanceId(),
-	        event.getOldStatus(),
-	        event.getNewStatus()
-	    );
+    	    //always notify citizen
+        notifyCitizen(event.getCitizenId(), event);
 
-	    //notify assigned officer (if exists)
-	    if (event.getAssignedOfficerId() != null &&
-	        !event.getNewStatus().equalsIgnoreCase("ESCALATED")) {
+    	    //notify assigned officer 
+        if (event.getAssignedOfficerId() != null &&
+                !"ESCALATED".equalsIgnoreCase(event.getNewStatus())) {
 
-	        notifyUserById(
-	            event.getAssignedOfficerId(),
-	            event.getGrievanceId(),
-	            event.getOldStatus(),
-	            event.getNewStatus()
-	        );
-	    }
-
-	    //Notify supervisor(of that dept) on escalation
-	    if ("ESCALATED".equalsIgnoreCase(event.getNewStatus())
-	        && event.getAssignedOfficerId() != null) {
-
-	        notifyUserById(
-	            event.getAssignedOfficerId(), // supervisorId
-	            event.getGrievanceId(),
-	            event.getOldStatus(),
-	            event.getNewStatus()
-	        );
-	    }
-	}
-    
-    private void notifyUserById(
-            String userId,
-            String grievanceId,
-            String oldStatus,
-            String newStatus) {
-
-        UserResponse user = webClientBuilder.build()
-                .get()
-                .uri("http://user-service/users/{id}", userId)
-                .retrieve()
-                .bodyToMono(UserResponse.class)
-                .block();
-
-        if (user == null || user.getEmail() == null) {
-            log.error("Email not found for user {}", userId);
-            return;
+            notifyOfficer(event.getAssignedOfficerId(), event);
         }
 
-        emailService.sendStatusChangeMail(
-                user.getEmail(),
-                grievanceId,
-                oldStatus,
-                newStatus
-        );
+    	  //Notify supervisor(of that dept) on escalation
+        if ("ESCALATED".equalsIgnoreCase(event.getNewStatus()) &&
+                event.getAssignedOfficerId() != null) {
+            notifySupervisor(event.getAssignedOfficerId(), event);
+        }
+    }
 
-        log.info("Email sent to {} for grievance {}", user.getEmail(), grievanceId);
+
+    private void notifyCitizen(
+            String userId,
+            GrievanceStatusChangedEvent event) {
+
+        UserResponse user = fetchUser(userId);
+        if (user == null) return;
+
+        emailService.sendCitizenMail(
+                user.getEmail(),
+                user.getName(),
+                event.getGrievanceId(),
+                event.getOldStatus(),
+                event.getNewStatus());
+    }
+
+    private void notifyOfficer(
+            String officerId,
+            GrievanceStatusChangedEvent event) {
+
+        UserResponse user = fetchUser(officerId);
+        if (user == null) return;
+
+        emailService.sendOfficerMail(
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                event.getGrievanceId(),
+                event.getNewStatus()
+        );
+    }
+
+    private void notifySupervisor(
+            String supervisorId,
+            GrievanceStatusChangedEvent event) {
+
+        UserResponse user = fetchUser(supervisorId);
+        if (user == null) return;
+
+        emailService.sendSupervisorMail(
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                event.getGrievanceId());
+    }
+
+    private UserResponse fetchUser(String userId) {
+        try {
+            return webClientBuilder.build()
+                    .get()
+                    .uri("http://user-service/users/{id}", userId)
+                    .retrieve()
+                    .bodyToMono(UserResponse.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Failed to fetch user {}", userId, e);
+            return null;
+        }
     }
 
 }
