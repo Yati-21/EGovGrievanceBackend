@@ -395,6 +395,7 @@ public class GrievanceService {
                 return grievanceRepository.findByCitizenId(citizenId);
         }
 
+        
         public Mono<Void> escalateGrievance(String grievanceId,String citizenId,String role) 
         {
             if (!"CITIZEN".equalsIgnoreCase(role)) {
@@ -436,6 +437,7 @@ public class GrievanceService {
                                     .get()
                                     .uri("http://user-service/users/supervisor/department/{departmentId}",
                                                     grievance.getDepartmentId())
+                                    .header("X-INTERNAL-CALL", "true")
                                     .retrieve()
                                     .bodyToMono(String.class)
                                     .flatMap(supervisorId -> 
