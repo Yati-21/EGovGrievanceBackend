@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.dto.UserResponse;
+import com.egov.grievance.event.GrievanceStatusChangedEvent;
 import com.egov.grievance.exception.UserNotFoundException;
 import com.egov.grievance.model.GRIEVANCE_STATUS;
 import com.egov.grievance.model.Grievance;
@@ -35,6 +36,8 @@ public class GrievanceService {
         private final GrievanceHistoryService grievanceHistoryService;
         private final ReferenceDataService referenceDataService;
         private final WebClient.Builder webClientBuilder;
+        private final GrievanceEventPublisher grievanceEventPublisher;
+
 
         public Mono<String> createGrievance(String userId, String role, CreateGrievanceRequest request,Flux<FilePart> files) {
                 if (!"CITIZEN".equalsIgnoreCase(role)) {
@@ -64,39 +67,23 @@ public class GrievanceService {
                                                 .then(grievanceHistoryService.createInitialHistory(
                                                                 savedGrievance.getId(),
                                                                 userId))
+                                                .then(Mono.fromRunnable(() -> {
+                                                    grievanceEventPublisher.publishStatusChange(
+                                                        new GrievanceStatusChangedEvent(
+                                                            savedGrievance.getId(),
+                                                            savedGrievance.getCitizenId(),
+                                                            savedGrievance.getDepartmentId(),
+                                                            null,
+                                                            GRIEVANCE_STATUS.SUBMITTED.name(),
+                                                            userId,
+                                                            Instant.now()
+                                                        )
+                                                    );
+                                                }))
                                                 .thenReturn(savedGrievance.getId());
                                 });
         }
 
-        private Mono<Void> saveFile(FilePart filePart, String grievanceId, String userId) {
-                return Mono.fromRunnable(() -> {
-                        String uploadDir = "C:/Users/YATI/Desktop/EGovGrievance/uploads/" + grievanceId;
-                        File dir = new java.io.File(uploadDir);
-                        if (!dir.exists()) {
-                                dir.mkdirs();
-                        }
-                }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
-                                .then(Mono.defer(() -> {
-                                        String uploadDir = "C:/Users/YATI/Desktop/EGovGrievance/uploads/" + grievanceId;
-                                        String fileName = filePart.filename();
-                                        Path filePath = Paths.get(uploadDir, fileName);
-
-                                        GrievanceDocument doc = GrievanceDocument.builder()
-                                                .grievanceId(grievanceId)
-                                                .uploadedBy(userId)
-                                                .fileName(fileName)
-                                                .fileType(filePart.headers().getContentType() != null
-                                                                ? filePart.headers().getContentType().toString()
-                                                                : "application/octet-stream")
-                                                .filePath(filePath.toString())
-                                                .uploadedAt(Instant.now())
-                                                .build();
-
-                                        return filePart.transferTo(filePath)
-                                                        .then(grievanceDocumentRepository.save(doc))
-                                                        .then();
-                                }));
-        }
 
         public Mono<Void> assignGrievance(String grievanceId,String assignedBy,String role,String officerId) 
         {
@@ -158,7 +145,23 @@ public class GrievanceService {
                                                         .addHistory(grievanceId,
                                                                     oldStatus,
                                                                     GRIEVANCE_STATUS.ASSIGNED,
-                                                                    assignedBy));
+                                                                    assignedBy))
+                                                .then(Mono.fromRunnable(() -> 
+                                                {
+                                                    grievanceEventPublisher.publishStatusChange
+                                                    (
+                                                        new GrievanceStatusChangedEvent
+                                                        (
+                                                            grievanceId,
+                                                            grievance.getCitizenId(),
+                                                            grievance.getDepartmentId(),
+                                                            oldStatus.name(),
+                                                            GRIEVANCE_STATUS.ASSIGNED.name(),
+                                                            assignedBy,
+                                                            Instant.now()
+                                                        )
+                                                    );
+                                                }));
                                     }));
                     });
         }
@@ -192,7 +195,20 @@ public class GrievanceService {
                                                                         grievanceId,
                                                                         oldStatus,
                                                                         GRIEVANCE_STATUS.IN_REVIEW,
-                                                                        officerId));
+                                                                        officerId))
+                                                        .then(Mono.fromRunnable(() -> {
+                                                            grievanceEventPublisher.publishStatusChange(
+                                                                new GrievanceStatusChangedEvent(
+                                                                    grievanceId,
+                                                                    grievance.getCitizenId(),
+                                                                    grievance.getDepartmentId(),
+                                                                    oldStatus.name(),
+                                                                    GRIEVANCE_STATUS.IN_REVIEW.name(),
+                                                                    officerId,
+                                                                    Instant.now()
+                                                                )
+                                                            );
+                                                        }));
                                 });
         }
 
@@ -232,7 +248,20 @@ public class GrievanceService {
                                                                         grievanceId,
                                                                         oldStatus,
                                                                         GRIEVANCE_STATUS.RESOLVED,
-                                                                        officerId));
+                                                                        officerId))
+                                                        .then(Mono.fromRunnable(() -> {
+                                                            grievanceEventPublisher.publishStatusChange(
+                                                                new GrievanceStatusChangedEvent(
+                                                                    grievanceId,
+                                                                    grievance.getCitizenId(),
+                                                                    grievance.getDepartmentId(),
+                                                                    oldStatus.name(),
+                                                                    GRIEVANCE_STATUS.RESOLVED.name(),
+                                                                    officerId,
+                                                                    Instant.now()
+                                                                )
+                                                            );
+                                                        }));
                                 });
         }
 
@@ -265,7 +294,20 @@ public class GrievanceService {
                                                                 grievanceId,
                                                                 oldStatus,
                                                                 GRIEVANCE_STATUS.CLOSED,
-                                                                userId));
+                                                                userId))
+                                                .then(Mono.fromRunnable(() -> {
+                                                    grievanceEventPublisher.publishStatusChange(
+                                                        new GrievanceStatusChangedEvent(
+                                                            grievanceId,
+                                                            grievance.getCitizenId(),
+                                                            grievance.getDepartmentId(),
+                                                            oldStatus.name(),
+                                                            GRIEVANCE_STATUS.CLOSED.name(),
+                                                            userId,
+                                                            Instant.now()
+                                                        )
+                                                    );
+                                                }));
                         });
         }
 
@@ -316,7 +358,20 @@ public class GrievanceService {
 	                                                            grievanceId,
 	                                                            oldStatus,
 	                                                            GRIEVANCE_STATUS.REOPENED,
-	                                                            citizenId));
+	                                                            citizenId))
+	                                            .then(Mono.fromRunnable(() -> {
+	                                                grievanceEventPublisher.publishStatusChange(
+	                                                    new GrievanceStatusChangedEvent(
+	                                                        grievanceId,
+	                                                        grievance.getCitizenId(),
+	                                                        grievance.getDepartmentId(),
+	                                                        oldStatus.name(),
+	                                                        GRIEVANCE_STATUS.REOPENED.name(),
+	                                                        citizenId,
+	                                                        Instant.now()
+	                                                    )
+	                                                );
+	                                            }));
 	                    });
         }
 
@@ -390,7 +445,20 @@ public class GrievanceService {
                                                                             .addHistory(grievanceId,
                                                                                             oldStatus,
                                                                                             GRIEVANCE_STATUS.ESCALATED,
-                                                                                            citizenId));
+                                                                                            citizenId))
+                                                            .then(Mono.fromRunnable(() -> {
+                                                                grievanceEventPublisher.publishStatusChange(
+                                                                    new GrievanceStatusChangedEvent(
+                                                                        grievanceId,
+                                                                        grievance.getCitizenId(),
+                                                                        grievance.getDepartmentId(),
+                                                                        oldStatus.name(),
+                                                                        GRIEVANCE_STATUS.ESCALATED.name(),
+                                                                        citizenId,
+                                                                        Instant.now()
+                                                                    )
+                                                                );
+                                                            }));
                                     });
                         });
                 });
@@ -437,4 +505,33 @@ public class GrievanceService {
                                 });
                     });
         }
+        private Mono<Void> saveFile(FilePart filePart, String grievanceId, String userId) {
+            return Mono.fromRunnable(() -> {
+                    String uploadDir = "C:/Users/YATI/Desktop/EGovGrievance/uploads/" + grievanceId;
+                    File dir = new java.io.File(uploadDir);
+                    if (!dir.exists()) {
+                            dir.mkdirs();
+                    }
+            }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
+                            .then(Mono.defer(() -> {
+                                    String uploadDir = "C:/Users/YATI/Desktop/EGovGrievance/uploads/" + grievanceId;
+                                    String fileName = filePart.filename();
+                                    Path filePath = Paths.get(uploadDir, fileName);
+
+                                    GrievanceDocument doc = GrievanceDocument.builder()
+                                            .grievanceId(grievanceId)
+                                            .uploadedBy(userId)
+                                            .fileName(fileName)
+                                            .fileType(filePart.headers().getContentType() != null
+                                                            ? filePart.headers().getContentType().toString()
+                                                            : "application/octet-stream")
+                                            .filePath(filePath.toString())
+                                            .uploadedAt(Instant.now())
+                                            .build();
+
+                                    return filePart.transferTo(filePath)
+                                                    .then(grievanceDocumentRepository.save(doc))
+                                                    .then();
+                            }));
+    }
 }
