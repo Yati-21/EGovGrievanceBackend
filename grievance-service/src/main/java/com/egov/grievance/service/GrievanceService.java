@@ -543,4 +543,74 @@ public class GrievanceService {
                                                     .then();
                             }));
     }
+        
+        public Flux<Grievance> getGrievances(String statusStr, String departmentId, String role, String userId) {
+            GRIEVANCE_STATUS status = (statusStr != null && !statusStr.isBlank()) ? GRIEVANCE_STATUS.valueOf(statusStr.toUpperCase()) : null;
+
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                // admin can filter or view all
+                if (departmentId != null && status != null) {
+                    return grievanceRepository.findByDepartmentIdAndStatus(departmentId, status);
+                } 
+                else if (departmentId != null) {
+                    return grievanceRepository.findByDepartmentId(departmentId);
+                } 
+                else if (status != null) {
+                    return grievanceRepository.findByStatus(status);
+                } 
+                else {
+                    return grievanceRepository.findAll();
+                }
+            } 
+            else if ("SUPERVISOR".equalsIgnoreCase(role)) {
+                // get supervisor profile to get the correct dept id
+                return fetchUserById(userId, "Supervisor not found")
+                       .flatMapMany(user -> {
+                           // use the department from the user profile( ignore the passed deptId)
+                           if (status != null) {
+                               return grievanceRepository.findByDepartmentIdAndStatus(user.getDepartmentId(), status);
+                           } 
+                           else {
+                               return grievanceRepository.findByDepartmentId(user.getDepartmentId());
+                           }
+                       });
+            } 
+            else if ("OFFICER".equalsIgnoreCase(role)) {
+                // get officer profile -to validate 
+                return fetchUserById(userId, "Officer not found")
+                       .flatMapMany(user -> {
+                            // pfficer can only view their assigned grievances
+                            if (status != null) {
+                                return grievanceRepository.findByAssignedOfficerIdAndStatus(userId, status);
+                            } 
+                            else {
+                                return grievanceRepository.findByAssignedOfficerId(userId);
+                            }
+                       });
+            }
+            return Flux.empty();
+        }
+
+        public Flux<Grievance> getSlaBreaches(String userId, String role) {
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERVISOR".equalsIgnoreCase(role)) {
+            return Flux.error(new IllegalArgumentException("Only ADMIN or SUPERVISOR can view SLA breaches"));
+        }
+
+        // get all grievances that are not resolved/closed to calculate SLA for each
+        return grievanceRepository.findAll()
+                .filter(g -> g.getStatus() != GRIEVANCE_STATUS.RESOLVED && g.getStatus() != GRIEVANCE_STATUS.CLOSED)
+                .flatMap(grievance -> {
+                    // If already escalated- its at risk.
+                    if (Boolean.TRUE.equals(grievance.getIsEscalated())) {
+                        return Mono.just(grievance);
+                    }
+                    // Check  sla from  data
+                    return referenceDataService.getSlaHours(grievance.getDepartmentId(), grievance.getCategoryId())
+                            .filter(slaHours -> {
+                                long hoursElapsed = Duration.between(grievance.getCreatedAt(), Instant.now()).toHours();
+                                return hoursElapsed > slaHours;
+                            })
+                            .map(sla -> grievance);
+                });
+    }
 }
