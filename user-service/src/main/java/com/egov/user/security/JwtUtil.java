@@ -21,7 +21,7 @@ public class JwtUtil {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration}") long expirationMillis) {
 
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         this.expirationMillis = expirationMillis;
     }
 
@@ -34,5 +34,23 @@ public class JwtUtil {
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getUserIdFromToken(String token) {
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public String getRoleFromToken(String token) {
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody().get("role",
+                String.class);
     }
 }

@@ -27,6 +27,17 @@ public class DepartmentCategoryConfig {
 		}
 	}
 
+    public Map<String, Map<String, Object>> getDepartments() {
+        return departments;
+    }
+
+    public Map<String, Object> getCategories(String departmentId) {
+        if (departments != null && departments.containsKey(departmentId)) {
+            return (Map<String, Object>) departments.get(departmentId).get("categories");
+        }
+        return Map.of();
+    }
+
 	public boolean isValid(String departmentId, String categoryId) {
 		if (departments == null) {
 			return false;
@@ -59,5 +70,4 @@ public class DepartmentCategoryConfig {
 
 		return (Integer) category.get("slaHours");
 	}
-
 }

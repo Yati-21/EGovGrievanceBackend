@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatusCode;
 import com.egov.user.dto.LoginRequest;
 import com.egov.user.dto.LoginResponse;
 import com.egov.user.dto.RegisterRequest;
+import com.egov.user.dto.UserResponse;
+import com.egov.user.dto.UserUpdateRequest;
+import com.egov.user.exception.ResourceNotFoundException;
 import com.egov.user.exception.UserAlreadyExistsException;
 import com.egov.user.model.ROLE;
 import com.egov.user.model.User;
@@ -18,6 +21,7 @@ import com.egov.user.repository.UserRepository;
 import com.egov.user.security.JwtUtil;
 
 import jakarta.annotation.PostConstruct;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -145,5 +149,72 @@ public class UserService {
 
         return Mono.empty();
     }
+    
+    
+    
+    public Mono<UserResponse> updateProfile(String userId, UserUpdateRequest request) {
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .flatMap(user -> {
+                    if (request.getName() != null && !request.getName().isBlank()) {
+                        user.setName(request.getName());
+                    }
+                    if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                        return userRepository.findByEmail(request.getEmail())
+                                .filter(u -> !u.getId().equals(userId))
+                                .flatMap(existing -> Mono.<User>error(new UserAlreadyExistsException("Email already in use")))
+                                .switchIfEmpty(Mono.just(user))
+                                .map(u -> {
+                                    u.setEmail(request.getEmail());
+                                    return u;
+                                });
+                    }
+                    return Mono.just(user);
+                })
+                .flatMap(userRepository::save)
+                .map(this::mapToResponse);
+    }
+
+    public Mono<UserResponse> updateRole(String userId, String roleName) {
+        ROLE newRole = resolveRole(roleName);
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .flatMap(user -> {
+                    user.setRole(newRole);
+                    return userRepository.save(user);
+                })
+                .map(this::mapToResponse);
+    }
+
+    public Mono<UserResponse> updateDepartment(String userId, String departmentId) {
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .flatMap(user -> {
+                    return validateDepartmentFromGrievanceService(user.getRole(), departmentId)
+                            .then(Mono.defer(() -> {
+                                user.setDepartmentId(departmentId);
+                                return userRepository.save(user);
+                            }));
+                })
+                .map(this::mapToResponse);
+    }
+
+    public Flux<UserResponse> getUsersByRole(String roleName) {
+        ROLE role = resolveRole(roleName);
+        return userRepository.findByRole(role)
+                .map(this::mapToResponse);
+    }
+
+    private UserResponse mapToResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .departmentId(user.getDepartmentId())
+                .build();
+    }
+    
+    
 
 }
