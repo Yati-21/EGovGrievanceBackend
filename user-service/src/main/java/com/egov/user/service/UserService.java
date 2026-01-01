@@ -119,7 +119,6 @@ public class UserService {
         if (roleValue == null || roleValue.isBlank()) {
             return ROLE.CITIZEN;
         }
-
         try {
             return ROLE.valueOf(roleValue.toUpperCase());
         } catch (IllegalArgumentException ex) {
@@ -151,7 +150,6 @@ public class UserService {
                             response -> Mono.error(new IllegalArgumentException("Invalid department")))
                     .bodyToMono(Void.class);
         }
-
         return Mono.empty();
     }
     
@@ -163,8 +161,7 @@ public class UserService {
             String loggedInUserId,
             ROLE loggedInUserRole)
     {
-    	if (loggedInUserRole == ROLE.CITIZEN &&
-    	        !targetUserId.equals(loggedInUserId)) {
+    	if (!targetUserId.equals(loggedInUserId)) {
     	    return Mono.error(new ForbiddenException(
     	            "You cannot update another user's profile"));
     	}
@@ -265,7 +262,4 @@ public class UserService {
                 .departmentId(user.getDepartmentId())
                 .build();
     }
-    
-    
-
 }
