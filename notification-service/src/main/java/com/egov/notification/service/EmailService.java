@@ -1,11 +1,16 @@
 package com.egov.notification.service;
 
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -19,18 +24,35 @@ public class EmailService {
                         String oldStatus,
                         String newStatus) {
 
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setTo(to);
-                message.setSubject("Grievance Status Update");
-                message.setText(
-                                "Dear " + name + ",\n\n" +
-                                                "Your grievance (ID: " + grievanceId + ") has been updated.\n\n" +
-                                                "Previous Status: " + oldStatus + "\n" +
-                                                "Current Status: " + newStatus + "\n\n" +
-                                                "You can track your grievance on the portal.\n\n" +
-                                                "Regards,\nE-Governance Grievance System");
+                try {
+                        MimeMessage message = mailSender.createMimeMessage();
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-                mailSender.send(message);
+                        helper.setTo(to);
+                        helper.setSubject("Grievance Status Update");
+
+                        String htmlContent = String.format(
+                                        """
+                                            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                                <h2 style="color: #2c3e50;">Grievance Status Update</h2>
+                                                <p>Dear <b>%s</b>,</p>
+                                                <p>Your grievance (ID: <b>%s</b>) has been updated.</p>
+                                                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                                                    <p style="margin: 5px 0;"><b>Previous Status:</b> %s</p>
+                                                    <p style="margin: 5px 0;"><b>Current Status:</b> <span style="color: #2980b9;">%s</span></p>
+                                                </div>
+                                                <p>You can track your grievance on the portal.</p>
+                                                <br>
+                                                <p style="font-size: 14px; color: #7f8c8d;">Regards,<br>E-Governance Grievance System</p>
+                                            </div>
+                                         """,
+                                        name, grievanceId, oldStatus, newStatus);
+
+                        helper.setText(htmlContent, true);
+                        mailSender.send(message);
+                } catch (MessagingException e) {
+                        log.error("Failed to send citizen mail to {}", to, e);
+                }
         }
 
         public void sendOfficerMail(
@@ -40,18 +62,35 @@ public class EmailService {
                         String grievanceId,
                         String newStatus) {
 
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setTo(to);
-                message.setSubject("Grievance Action Required");
-                message.setText(
-                                "Dear " + name + " (" + designation + "),\n\n" +
-                                                "A grievance has been assigned/updated.\n\n" +
-                                                "Grievance ID: " + grievanceId + "\n" +
-                                                "Current Status: " + newStatus + "\n\n" +
-                                                "Please take necessary action.\n\n" +
-                                                "Regards,\nE-Governance Grievance System");
+                try {
+                        MimeMessage message = mailSender.createMimeMessage();
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-                mailSender.send(message);
+                        helper.setTo(to);
+                        helper.setSubject("Grievance Action Required");
+
+                        String htmlContent = String.format(
+                                        """
+                                        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                            <h2 style="color: #c0392b;">Action Required</h2>
+                                            <p>Dear <b>%s</b> (%s),</p>
+                                            <p>A grievance has been assigned/updated.</p>
+                                            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 5px solid #ffc107;">
+                                                <p style="margin: 5px 0;"><b>Grievance ID:</b> %s</p>
+                                                <p style="margin: 5px 0;"><b>Current Status:</b> <b>%s</b></p>
+                                            </div>
+                                            <p>Please take necessary action.</p>
+                                            <br>
+                                            <p style="font-size: 14px; color: #7f8c8d;">Regards,<br>E-Governance Grievance System</p>
+                                        </div>
+                                        """,
+                                        name, designation, grievanceId, newStatus);
+
+                        helper.setText(htmlContent, true);
+                        mailSender.send(message);
+                } catch (MessagingException e) {
+                        log.error("Failed to send officer mail to {}", to, e);
+                }
         }
 
         public void sendSupervisorMail(
@@ -60,16 +99,33 @@ public class EmailService {
                         String designation,
                         String grievanceId) {
 
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setTo(to);
-                message.setSubject("Grievance Escalated");
-                message.setText(
-                                "Dear " + name + " (" + designation + "),\n\n" +
-                                                "A grievance has been escalated and requires your attention.\n\n" +
-                                                "Grievance ID: " + grievanceId + "\n\n" +
-                                                "Please review and take appropriate action.\n\n" +
-                                                "Regards,\nE-Governance Grievance System");
+                try {
+                        MimeMessage message = mailSender.createMimeMessage();
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-                mailSender.send(message);
+                        helper.setTo(to);
+                        helper.setSubject("Grievance Escalated");
+
+                        String htmlContent = String.format(
+                                        """
+                                        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                            <h2 style="color: #e74c3c;">Grievance Escalated</h2>
+                                            <p>Dear <b>%s</b> (%s),</p>
+                                            <p>A grievance has been escalated and requires your attention.</p>
+                                            <div style="background-color: #fadbd8; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 5px solid #e74c3c;">
+                                                <p style="margin: 5px 0;"><b>Grievance ID:</b> %s</p>
+                                            </div>
+                                            <p>Please review and take appropriate action.</p>
+                                            <br>
+                                            <p style="font-size: 14px; color: #7f8c8d;">Regards,<br>E-Governance Grievance System</p>
+                                        </div>
+                                        """,
+                                        name, designation, grievanceId);
+
+                        helper.setText(htmlContent, true);
+                        mailSender.send(message);
+                } catch (MessagingException e) {
+                        log.error("Failed to send supervisor mail to {}", to, e);
+                }
         }
 }
