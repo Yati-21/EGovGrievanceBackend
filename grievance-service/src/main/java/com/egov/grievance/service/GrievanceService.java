@@ -73,7 +73,8 @@ public class GrievanceService {
                                                             savedGrievance.getId(),
                                                             savedGrievance.getCitizenId(),
                                                             savedGrievance.getDepartmentId(),
-                                                            null,
+                                                            null, //no officer yet
+                                                            null, //no  old status yet
                                                             GRIEVANCE_STATUS.SUBMITTED.name(),
                                                             userId,
                                                             Instant.now()
@@ -155,6 +156,7 @@ public class GrievanceService {
                                                             grievanceId,
                                                             grievance.getCitizenId(),
                                                             grievance.getDepartmentId(),
+                                                            officerId,
                                                             oldStatus.name(),
                                                             GRIEVANCE_STATUS.ASSIGNED.name(),
                                                             assignedBy,
@@ -202,6 +204,7 @@ public class GrievanceService {
                                                                     grievanceId,
                                                                     grievance.getCitizenId(),
                                                                     grievance.getDepartmentId(),
+                                                                    grievance.getAssignedOfficerId(),
                                                                     oldStatus.name(),
                                                                     GRIEVANCE_STATUS.IN_REVIEW.name(),
                                                                     officerId,
@@ -255,6 +258,7 @@ public class GrievanceService {
                                                                     grievanceId,
                                                                     grievance.getCitizenId(),
                                                                     grievance.getDepartmentId(),
+                                                                    grievance.getAssignedOfficerId(),
                                                                     oldStatus.name(),
                                                                     GRIEVANCE_STATUS.RESOLVED.name(),
                                                                     officerId,
@@ -301,6 +305,7 @@ public class GrievanceService {
                                                             grievanceId,
                                                             grievance.getCitizenId(),
                                                             grievance.getDepartmentId(),
+                                                            grievance.getAssignedOfficerId(),
                                                             oldStatus.name(),
                                                             GRIEVANCE_STATUS.CLOSED.name(),
                                                             userId,
@@ -365,6 +370,7 @@ public class GrievanceService {
 	                                                        grievanceId,
 	                                                        grievance.getCitizenId(),
 	                                                        grievance.getDepartmentId(),
+	                                                        null,  // no officer after reopen
 	                                                        oldStatus.name(),
 	                                                        GRIEVANCE_STATUS.REOPENED.name(),
 	                                                        citizenId,
@@ -452,6 +458,7 @@ public class GrievanceService {
                                                                         grievanceId,
                                                                         grievance.getCitizenId(),
                                                                         grievance.getDepartmentId(),
+                                                                        supervisorId,
                                                                         oldStatus.name(),
                                                                         GRIEVANCE_STATUS.ESCALATED.name(),
                                                                         citizenId,

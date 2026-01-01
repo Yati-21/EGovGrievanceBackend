@@ -10,6 +10,7 @@ public class GrievanceStatusChangedEvent {
     private String grievanceId;
     private String citizenId;
     private String departmentId;
+    private String assignedOfficerId;
     private String oldStatus;
     private String newStatus;
     private String changedBy;
