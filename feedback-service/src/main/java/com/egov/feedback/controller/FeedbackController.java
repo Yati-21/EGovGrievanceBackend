@@ -27,22 +27,29 @@ public class FeedbackController {
     private final FeedbackService feedbackService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Feedback> submitFeedback(
+    public Mono<ResponseEntity<String>> submitFeedback(
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader(value = "X-USER-ROLE") String role,
             @Valid @RequestBody FeedbackRequest request) {
-        return feedbackService.submitFeedback(userId, role, request);
+        return feedbackService.submitFeedback(userId, role, request)
+                .map(id -> ResponseEntity.status(HttpStatus.CREATED).body(id));
     }
 
     @GetMapping("/grievance/{grievanceId}")
-    public Mono<Feedback> getFeedbackByGrievance(@PathVariable String grievanceId) {
-        return feedbackService.getFeedbackByGrievanceId(grievanceId);
+    public Mono<Feedback> getFeedbackByGrievance(
+            @PathVariable String grievanceId,
+            @RequestHeader("X-USER-ID") String userId,
+            @RequestHeader("X-USER-ROLE") String role) {
+        return feedbackService.getFeedbackByGrievanceId(grievanceId, userId, role);
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<Feedback>> getFeedbackById(@PathVariable String id) {
-        return feedbackService.getFeedbackById(id)
+    public Mono<ResponseEntity<Feedback>> getFeedbackById(
+            @PathVariable String id,
+            @RequestHeader("X-USER-ID") String userId,
+            @RequestHeader("X-USER-ROLE") String role) {
+
+        return feedbackService.getFeedbackById(id, userId, role)
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }

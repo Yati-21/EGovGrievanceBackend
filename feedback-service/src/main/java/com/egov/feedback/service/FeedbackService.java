@@ -18,7 +18,7 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final WebClient.Builder webClientBuilder;
 
-    public Mono<Feedback> submitFeedback(String citizenId, String role, FeedbackRequest request) {
+    public Mono<String> submitFeedback(String citizenId, String role, FeedbackRequest request) {
 
         if (!"CITIZEN".equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException("Only CITIZEN can submit feedback"));
@@ -26,9 +26,9 @@ public class FeedbackService {
 
         return feedbackRepository.findByGrievanceId(request.getGrievanceId())
                 .flatMap(existing -> Mono
-                        .<Feedback>error(new IllegalArgumentException("Feedback already submitted for this grievance")))
+                        .<String>error(new IllegalArgumentException("Feedback already submitted for this grievance")))
                 .switchIfEmpty(
-                        fetchGrievance(request.getGrievanceId())
+                        fetchGrievance(request.getGrievanceId(), citizenId, role)
                                 .flatMap(grievance -> {
                                     if (!"CLOSED".equalsIgnoreCase(grievance.getStatus())) {
                                         return Mono.error(new IllegalArgumentException(
@@ -48,25 +48,31 @@ public class FeedbackService {
                                             .createdAt(java.time.Instant.now())
                                             .build();
 
-                                    return feedbackRepository.save(feedback);
+                                    return feedbackRepository.save(feedback).map(Feedback::getId);
                                 }));
     }
 
-    private Mono<GrievanceResponse> fetchGrievance(String grievanceId) {
+    // for verify access by calling grievance-service
+    private Mono<GrievanceResponse> fetchGrievance(String grievanceId, String userId, String role) {
         return webClientBuilder.build()
                 .get()
                 .uri("http://grievance-service/grievances/{id}", grievanceId)
+                .header("X-USER-ID", userId)
+                .header("X-USER-ROLE", role)
                 .retrieve()
                 .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
                         response -> Mono.error(new IllegalArgumentException("Grievance not found")))
                 .bodyToMono(GrievanceResponse.class);
     }
 
-    public Mono<Feedback> getFeedbackByGrievanceId(String grievanceId) {
-        return feedbackRepository.findByGrievanceId(grievanceId);
+    public Mono<Feedback> getFeedbackByGrievanceId(String grievanceId, String userId, String role) {
+        return fetchGrievance(grievanceId, userId, role)
+                .flatMap(grievance -> feedbackRepository.findByGrievanceId(grievanceId));
     }
 
-    public Mono<Feedback> getFeedbackById(String id) {
-        return feedbackRepository.findById(id);
+    public Mono<Feedback> getFeedbackById(String id, String userId, String role) {
+        return feedbackRepository.findById(id)
+                .flatMap(feedback -> fetchGrievance(feedback.getGrievanceId(), userId, role)
+                        .thenReturn(feedback));
     }
 }
