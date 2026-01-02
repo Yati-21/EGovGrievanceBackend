@@ -46,6 +46,10 @@ public class UserController {
 
     @GetMapping("/{id}")
     public Mono<UserResponse> getUserById(@PathVariable String id) {
+    	
+    	//--to check load balancing
+    	System.out.println("User Service Instance received request for User ID: " + id);
+    	
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new com.egov.user.exception.ResourceNotFoundException("User not found")))
                 .map(user -> UserResponse.builder()
