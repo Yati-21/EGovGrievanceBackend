@@ -13,6 +13,7 @@ import com.egov.user.dto.LoginResponse;
 import com.egov.user.dto.RegisterRequest;
 import com.egov.user.dto.UserResponse;
 import com.egov.user.dto.UserUpdateRequest;
+import com.egov.user.exception.ForbiddenException;
 import com.egov.user.exception.ResourceNotFoundException;
 import com.egov.user.exception.UserAlreadyExistsException;
 import com.egov.user.model.ROLE;
@@ -52,6 +53,9 @@ public class UserService {
                         Mono.defer(() -> {
 
                             ROLE role = resolveRole(request.getRole());
+                            if (role == ROLE.CITIZEN) {
+                                request.setDepartmentId(null); // citizen cant have department
+                            }
 
                             return validateDepartmentRuleReactive(role, request.getDepartmentId())
                                     .then(validateDepartmentFromGrievanceService(role, request.getDepartmentId()))
@@ -66,6 +70,7 @@ public class UserService {
                                                 .createdAt(Instant.now())
                                                 .build();
                                     }))
+                                    
                                     .flatMap(user -> userRepository.save(user));
 
                         }))
@@ -114,7 +119,6 @@ public class UserService {
         if (roleValue == null || roleValue.isBlank()) {
             return ROLE.CITIZEN;
         }
-
         try {
             return ROLE.valueOf(roleValue.toUpperCase());
         } catch (IllegalArgumentException ex) {
@@ -146,14 +150,22 @@ public class UserService {
                             response -> Mono.error(new IllegalArgumentException("Invalid department")))
                     .bodyToMono(Void.class);
         }
-
         return Mono.empty();
     }
     
     
     
-    public Mono<UserResponse> updateProfile(String userId, UserUpdateRequest request) {
-        return userRepository.findById(userId)
+    public Mono<UserResponse> updateProfile(
+            String targetUserId,
+            UserUpdateRequest request,
+            String loggedInUserId,
+            ROLE loggedInUserRole)
+    {
+    	if (!targetUserId.equals(loggedInUserId)) {
+    	    return Mono.error(new ForbiddenException(
+    	            "You cannot update another user's profile"));
+    	}
+        return userRepository.findById(targetUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
                 .flatMap(user -> {
                     if (request.getName() != null && !request.getName().isBlank()) {
@@ -161,7 +173,7 @@ public class UserService {
                     }
                     if (request.getEmail() != null && !request.getEmail().isBlank()) {
                         return userRepository.findByEmail(request.getEmail())
-                                .filter(u -> !u.getId().equals(userId))
+                                .filter(u -> !u.getId().equals(targetUserId))
                                 .flatMap(existing -> Mono.<User>error(new UserAlreadyExistsException("Email already in use")))
                                 .switchIfEmpty(Mono.just(user))
                                 .map(u -> {
@@ -175,21 +187,49 @@ public class UserService {
                 .map(this::mapToResponse);
     }
 
-    public Mono<UserResponse> updateRole(String userId, String roleName) {
+    public Mono<UserResponse> updateRole(
+            String targetUserId,
+            String roleName,
+            String loggedInUserId,
+            ROLE loggedInUserRole)
+ {
+    	if (loggedInUserRole != ROLE.ADMIN) {
+    	    return Mono.error(new ForbiddenException(
+    	            "Only ADMIN can update user roles"));
+    	}
+
         ROLE newRole = resolveRole(roleName);
-        return userRepository.findById(userId)
+        
+        return userRepository.findById(targetUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
                 .flatMap(user -> {
                     user.setRole(newRole);
+                    if (newRole == ROLE.CITIZEN) {
+                        user.setDepartmentId(null);
+                    }
                     return userRepository.save(user);
                 })
                 .map(this::mapToResponse);
     }
 
-    public Mono<UserResponse> updateDepartment(String userId, String departmentId) {
-        return userRepository.findById(userId)
+    public Mono<UserResponse> updateDepartment(
+            String targetUserId,
+            String departmentId,
+            String loggedInUserId,
+            ROLE loggedInUserRole)
+ {
+    	if (loggedInUserRole != ROLE.ADMIN) {
+    	    return Mono.error(new ForbiddenException(
+    	            "Only ADMIN can assign departments"));
+    	}
+    	
+        return userRepository.findById(targetUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
                 .flatMap(user -> {
+                	if (user.getRole() == ROLE.CITIZEN) {
+                	    return Mono.error(new IllegalArgumentException(
+                	            "Citizen cannot be assigned a department"));
+                	}
                     return validateDepartmentFromGrievanceService(user.getRole(), departmentId)
                             .then(Mono.defer(() -> {
                                 user.setDepartmentId(departmentId);
@@ -199,7 +239,15 @@ public class UserService {
                 .map(this::mapToResponse);
     }
 
-    public Flux<UserResponse> getUsersByRole(String roleName) {
+    public Flux<UserResponse> getUsersByRole(
+            String roleName,
+            ROLE loggedInUserRole)
+	{
+    	if (loggedInUserRole != ROLE.ADMIN) {
+    	    return Flux.error(new ForbiddenException(
+    	            "Only ADMIN can view users by role"));
+    	}
+
         ROLE role = resolveRole(roleName);
         return userRepository.findByRole(role)
                 .map(this::mapToResponse);
@@ -214,7 +262,4 @@ public class UserService {
                 .departmentId(user.getDepartmentId())
                 .build();
     }
-    
-    
-
 }

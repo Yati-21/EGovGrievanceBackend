@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,6 +57,22 @@ public class GrievanceController {
 
                 return grievanceService.createGrievance(userId, role, request, files)
                                 .map(id -> ResponseEntity.status(HttpStatus.CREATED).body(id));
+        }
+        @GetMapping
+        public Flux<Grievance> getAllGrievances(
+		                @RequestHeader("X-USER-ID") String userId,
+		                @RequestHeader("X-USER-ROLE") String role,
+		                @RequestParam(required = false) String status,
+		                @RequestParam(required = false) String departmentId) {
+		
+		            return grievanceService.getGrievances(status, departmentId, role, userId);
+        }
+
+        @GetMapping("/sla-breaches")
+        public Flux<Grievance> getSlaBreaches(
+                @RequestHeader("X-USER-ID") String userId,
+                @RequestHeader("X-USER-ROLE") String role) {
+                return grievanceService.getSlaBreaches(userId, role);
         }
 
         @PutMapping("/{grievanceId}/assign")
