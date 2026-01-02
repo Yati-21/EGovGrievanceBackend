@@ -46,7 +46,7 @@ public class UserController {
     public Mono<UserResponse> getUserById(@PathVariable String id) {
     	
     	//--to check load balancing
-    	System.out.println("User Service Instance received request for User ID: " + id);
+    	//System.out.println("User Service Instance received request for User ID: " + id);
     	
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new com.egov.user.exception.ResourceNotFoundException("User not found")))
@@ -60,27 +60,23 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-//    @PreAuthorize("#userId == authentication.principal")
     public Mono<UserResponse> updateProfile(@PathVariable String userId, @RequestBody UserUpdateRequest request,@RequestHeader("X-USER-ID") String loggedInUserId,
             @RequestHeader("X-USER-ROLE") String loggedInUserRole ) {
     	return userService.updateProfile(userId,request,loggedInUserId,ROLE.valueOf(loggedInUserRole));
     }
 
     @PutMapping("/{userId}/role/{role}")
-//    @PreAuthorize("hasRole('ADMIN')")
     public Mono<UserResponse> updateUserRole(@PathVariable String userId,@PathVariable String role,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
         return userService.updateRole(userId,role,loggedInUserId,ROLE.valueOf(loggedInUserRole));
     }
 
 
     @PutMapping("/{userId}/department/{departmentId}")
-//    @PreAuthorize("hasRole('ADMIN')")
     public Mono<UserResponse> assignDepartment(@PathVariable String userId, @PathVariable String departmentId ,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
     	return userService.updateDepartment(userId,departmentId,loggedInUserId,ROLE.valueOf(loggedInUserRole));
     }
 
     @GetMapping("/role/{role}")
-//    @PreAuthorize("hasRole('ADMIN')")
     public Flux<UserResponse> getUsersByRole(@PathVariable String role,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
     	return userService.getUsersByRole(role,ROLE.valueOf(loggedInUserRole));
     }

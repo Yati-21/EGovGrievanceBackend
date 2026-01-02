@@ -626,7 +626,7 @@ public class GrievanceService {
                     if (Boolean.TRUE.equals(grievance.getIsEscalated())) {
                         return Mono.just(grievance);
                     }
-                    // Check  sla from  data
+                    // check  sla from  data
                     return referenceDataService.getSlaHours(grievance.getDepartmentId(), grievance.getCategoryId())
                             .filter(slaHours -> {
                                 long hoursElapsed = Duration.between(grievance.getCreatedAt(), Instant.now()).toHours();
