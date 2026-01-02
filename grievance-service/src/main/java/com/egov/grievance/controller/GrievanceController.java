@@ -76,63 +76,53 @@ public class GrievanceController {
         }
 
         @PutMapping("/{grievanceId}/assign")
-        public Mono<ResponseEntity<Map<String, String>>> assignGrievance(
+        public Mono<Void> assignGrievance(
                         @PathVariable String grievanceId,
                         @RequestHeader("X-USER-ID") String userId,
                         @RequestHeader("X-USER-ROLE") String role,
                         @Valid @RequestBody AssignGrievanceRequest request) {
 
                 return grievanceService
-                                .assignGrievance(grievanceId, userId, role, request.getOfficerId())
-                                .thenReturn(ResponseEntity.ok(
-                                                Map.of("message", "Grievance assigned successfully")));
+                                .assignGrievance(grievanceId, userId, role, request.getOfficerId());
+                               
         }
 
         @PutMapping("/{grievanceId}/in-review")
-        public Mono<ResponseEntity<Map<String, String>>> markInReview(
+        public Mono<Void> markInReview(
                         @PathVariable String grievanceId,
                         @RequestHeader("X-USER-ID") String userId,
                         @RequestHeader("X-USER-ROLE") String role) {
 
-                return grievanceService
-                                .markInReview(grievanceId, userId, role)
-                                .thenReturn(ResponseEntity.ok(
-                                                Map.of("message", "Grievance moved to IN_REVIEW")));
+                return grievanceService.markInReview(grievanceId, userId, role);
         }
 
         @PutMapping("/{grievanceId}/resolve")
-        public Mono<ResponseEntity<Map<String, String>>> resolveGrievance(
+        public Mono<Void> resolveGrievance(
                         @PathVariable String grievanceId,
                         @RequestHeader("X-USER-ID") String userId,
                         @RequestHeader("X-USER-ROLE") String role) {
 
                 return grievanceService
-                                .resolveGrievance(grievanceId, userId, role)
-                                .thenReturn(ResponseEntity.ok(
-                                                Map.of("message", "Grievance resolved")));
+                                .resolveGrievance(grievanceId, userId, role);
         }
 
         @PutMapping("/{grievanceId}/close")
-        public Mono<ResponseEntity<Map<String, String>>> closeGrievance(
+        public Mono<Void> closeGrievance(
                         @PathVariable String grievanceId,
                         @RequestHeader("X-USER-ID") String userId,
                         @RequestHeader("X-USER-ROLE") String role) {
 
                 return grievanceService
-                                .closeGrievance(grievanceId, userId, role)
-                                .thenReturn(ResponseEntity.ok(
-                                                Map.of("message", "Grievance closed")));
+                                .closeGrievance(grievanceId, userId, role);
         }
 
         @PutMapping("/{grievanceId}/reopen")
-        public Mono<ResponseEntity<Map<String, String>>> reopen(
+        public Mono<Void> reopen(
                         @PathVariable String grievanceId,
                         @RequestHeader("X-USER-ID") String userId,
                         @RequestHeader("X-USER-ROLE") String role) {
 
-                return grievanceService.reopenGrievance(grievanceId, userId, role)
-                                .thenReturn(ResponseEntity.ok(
-                                                Map.of("message", "Grievance reopened")));
+                return grievanceService.reopenGrievance(grievanceId, userId, role);
         }
 
         @GetMapping("/assigned")
@@ -160,29 +150,32 @@ public class GrievanceController {
         }
 
         @GetMapping("/citizen/{citizenId}")
-        public Flux<Grievance> getByCitizen(@PathVariable String citizenId) {
-                return grievanceRepository.findByCitizenId(citizenId);
+        public Flux<Grievance> getByCitizen(@PathVariable String citizenId,
+                                            @RequestHeader("X-USER-ID") String userId,
+                                            @RequestHeader("X-USER-ROLE") String role) {
+                return grievanceService.getGrievancesByCitizen(citizenId, userId, role);
         }
 
+
         @GetMapping("/department/{departmentId}")
-        public Flux<Grievance> getByDepartment(@PathVariable String departmentId) {
-                return grievanceRepository.findByDepartmentId(departmentId);
+        public Flux<Grievance> getByDepartment(@PathVariable String departmentId,
+                                               @RequestHeader("X-USER-ID") String userId,
+                                               @RequestHeader("X-USER-ROLE") String role) {
+                return grievanceService.getGrievancesByDepartment(departmentId, userId, role);
         }
 
         @PutMapping("/{grievanceId}/escalate")
-        public Mono<ResponseEntity<Map<String, String>>> escalate(
+        public Mono<Void> escalate(
                         @PathVariable String grievanceId,
                         @RequestHeader("X-USER-ID") String userId,
                         @RequestHeader("X-USER-ROLE") String role) {
                 return grievanceService
-                                .escalateGrievance(grievanceId, userId, role)
-                                .thenReturn(ResponseEntity.ok(
-                                                Map.of("message", "Grievance escalated")));
+                                .escalateGrievance(grievanceId, userId, role);
         }
 
         @GetMapping("/{grievanceId}")
-        public Mono<ResponseEntity<Grievance>> getGrievanceById(@PathVariable String grievanceId) {
-                return grievanceRepository.findById(grievanceId)
+        public Mono<ResponseEntity<Grievance>> getGrievanceById(@PathVariable String grievanceId, @RequestHeader("X-USER-ID") String userId,@RequestHeader("X-USER-ROLE") String role) {
+                return grievanceService.getGrievanceById(grievanceId, userId, role)
                                 .map(ResponseEntity::ok)
                                 .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
         }
