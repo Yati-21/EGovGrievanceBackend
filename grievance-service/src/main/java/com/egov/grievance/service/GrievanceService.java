@@ -7,13 +7,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+
 import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.dto.UserResponse;
 import com.egov.grievance.event.GrievanceStatusChangedEvent;
+import com.egov.grievance.exception.ServiceUnavailableException;
 import com.egov.grievance.exception.UserNotFoundException;
 import com.egov.grievance.model.GRIEVANCE_STATUS;
 import com.egov.grievance.model.Grievance;
@@ -37,7 +42,9 @@ public class GrievanceService {
         private final ReferenceDataService referenceDataService;
         private final WebClient.Builder webClientBuilder;
         private final GrievanceEventPublisher grievanceEventPublisher;
-
+        
+        private static final String USER_SERVICE_CB = "userServiceCB";
+        private final ReactiveCircuitBreakerFactory<?, ?> circuitBreakerFactory;
 
         public Mono<String> createGrievance(String userId, String role, CreateGrievanceRequest request,Flux<FilePart> files) {
                 if (!"CITIZEN".equalsIgnoreCase(role)) {
@@ -435,8 +442,7 @@ public class GrievanceService {
 
                                 return webClientBuilder.build()
                                     .get()
-                                    .uri("http://user-service/users/supervisor/department/{departmentId}",
-                                                    grievance.getDepartmentId())
+                                    .uri("http://user-service/users/supervisor/department/{departmentId}",grievance.getDepartmentId())
                                     .header("X-INTERNAL-CALL", "true")
                                     .retrieve()
                                     .bodyToMono(String.class)
@@ -473,15 +479,31 @@ public class GrievanceService {
                 });
         }
 
+//        private Mono<UserResponse> fetchUserById(String userId, String errorMessage) {
+//                return webClientBuilder.build()
+//                        .get()
+//                        .uri("http://user-service/users/{id}", userId)
+//                        .retrieve()
+//                        .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
+//                                        response -> Mono.error(new IllegalArgumentException(errorMessage)))
+//                        .bodyToMono(UserResponse.class);
+//        }
         private Mono<UserResponse> fetchUserById(String userId, String errorMessage) {
-                return webClientBuilder.build()
+
+            ReactiveCircuitBreaker cb =circuitBreakerFactory.create(USER_SERVICE_CB);
+
+            Mono<UserResponse> call =
+                    webClientBuilder.build()
                         .get()
                         .uri("http://user-service/users/{id}", userId)
                         .retrieve()
-                        .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
-                                        response -> Mono.error(new IllegalArgumentException(errorMessage)))
+                        .onStatus(HttpStatusCode::is4xxClientError,response -> Mono.error(new IllegalArgumentException(errorMessage)))
                         .bodyToMono(UserResponse.class);
+            return cb.run(call,ex -> Mono.error(new ServiceUnavailableException("User service unavailable"))
+            );
         }
+        
+        
         public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId) {
             return grievanceRepository.existsById(grievanceId)
                     .flatMapMany(exists -> {

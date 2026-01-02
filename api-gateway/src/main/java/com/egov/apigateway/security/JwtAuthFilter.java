@@ -62,13 +62,13 @@ public class JwtAuthFilter implements GlobalFilter {
 				return exchange.getResponse().setComplete();
 			}
 
-			// Forward headers to services
+			// forward headers to services
 			ServerWebExchange mutatedExchange = exchange.mutate()
 					.request(builder -> builder.header("X-USER-ID", userId).header("X-USER-ROLE", role)).build();
 			return chain.filter(mutatedExchange);
 		} 
 		catch (Exception ex) {
-//			ex.printStackTrace();
+			//ex.printStackTrace();
 			exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
 			return exchange.getResponse().setComplete();
 		}
@@ -88,7 +88,7 @@ public class JwtAuthFilter implements GlobalFilter {
 		}
 
         //officer-only 
-        if (path.matches(".*/grievances/.*/in-review")|| path.matches(".*/grievances/.*/resolve") && method.equals("PUT")) {
+        if ((path.matches(".*/grievances/.*/in-review")|| path.matches(".*/grievances/.*/resolve")) && method.equals("PUT")) {
 			return role.equals("OFFICER");
 		}
 
@@ -106,12 +106,12 @@ public class JwtAuthFilter implements GlobalFilter {
 			return "true".equalsIgnoreCase(internalCall); // trust internal call
 		}
 
-		// Update own profile
+		// update own profile
 		if (path.matches("/users/[^/]+$") && method.equals("PUT")) {
             return role.equals("CITIZEN") || role.equals("OFFICER")|| role.equals("SUPERVISOR") || role.equals("ADMIN");
 		}
 
-		// ADMIN-only operations
+		// admin-only operations
 		if (path.matches("/users/.*/role/.*") && method.equals("PUT")
 				|| path.matches("/users/.*/department/.*") && method.equals("PUT")
 				|| path.startsWith("/users/role/") && method.equals("PUT")) {
