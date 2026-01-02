@@ -23,7 +23,9 @@ import com.egov.grievance.exception.UserNotFoundException;
 import com.egov.grievance.model.GRIEVANCE_STATUS;
 import com.egov.grievance.model.Grievance;
 import com.egov.grievance.model.GrievanceDocument;
+import com.egov.grievance.model.GrievanceStatusHistory;
 import com.egov.grievance.repository.GrievanceDocumentRepository;
+import com.egov.grievance.repository.GrievanceHistoryRepository;
 import com.egov.grievance.repository.GrievanceRepository;
 
 import org.springframework.web.reactive.function.client.WebClient;
@@ -42,6 +44,7 @@ public class GrievanceService {
     private final ReferenceDataService referenceDataService;
     private final WebClient.Builder webClientBuilder;
     private final GrievanceEventPublisher grievanceEventPublisher;
+    private final GrievanceHistoryRepository grievanceHistoryRepository;
 
     private static final String USER_SERVICE_CB = "userServiceCB";
     private final ReactiveCircuitBreakerFactory<?, ?> circuitBreakerFactory;
@@ -373,13 +376,6 @@ public class GrievanceService {
                 });
     }
 
-    public Flux<Grievance> getAssignedGrievances(String officerId, String role) {
-        if (!"OFFICER".equalsIgnoreCase(role)) {
-            return Flux.error(new IllegalArgumentException("Only OFFICER can view assigned grievances"));
-        }
-        return grievanceRepository.findByAssignedOfficerId(officerId);
-    }
-
     public Flux<Grievance> getGrievancesByCitizen(String citizenId) {
         return grievanceRepository.findByCitizenId(citizenId);
     }
@@ -507,24 +503,23 @@ public class GrievanceService {
                 .bodyToMono(UserResponse.class);
         return cb.run(call, ex -> Mono.error(new ServiceUnavailableException("User service unavailable")));
     }
-
-    public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId) {
-        return grievanceRepository.existsById(grievanceId)
-                .flatMapMany(exists -> {
-                    if (!exists) {
-                        return Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Grievance not found"));
-                    }
-                    return grievanceDocumentRepository.findByGrievanceId(grievanceId);
-                });
+    
+    public Flux<GrievanceStatusHistory> getGrievanceHistory(String grievanceId, String userId, String role) {
+        return getGrievanceById(grievanceId, userId, role)
+                // if valid- get history
+                .flatMapMany(grievance -> grievanceHistoryRepository.findByGrievanceId(grievanceId));
     }
 
-    public Mono<Resource> downloadDocument(String grievanceId, String documentId) {
-        return grievanceRepository.existsById(grievanceId)
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Grievance not found"));
-                    }
-                    return grievanceDocumentRepository.findById(documentId)
+    public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId, String userId, String role) {
+    	return getGrievanceById(grievanceId, userId, role)
+    			.flatMapMany(grievance -> grievanceDocumentRepository.findByGrievanceId(grievanceId));
+    }
+
+    
+
+    public Mono<Resource> downloadDocument(String grievanceId, String documentId, String userId, String role) {
+    	return getGrievanceById(grievanceId, userId, role)
+                .flatMap(grievance -> grievanceDocumentRepository.findById(documentId)
                             .switchIfEmpty(
                                     Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")))
                             .flatMap(doc -> {
@@ -540,8 +535,7 @@ public class GrievanceService {
                                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                                             "File not found on server"));
                                 }
-                            });
-                });
+                }));
     }
 
     private Mono<Void> saveFile(FilePart filePart, String grievanceId, String userId) {

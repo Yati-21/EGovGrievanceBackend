@@ -1,5 +1,6 @@
 package com.egov.grievance.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.egov.grievance.model.GrievanceDocument;
+import com.egov.grievance.model.GrievanceStatusHistory;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -125,28 +127,14 @@ public class GrievanceController {
                 return grievanceService.reopenGrievance(grievanceId, userId, role);
         }
 
-        @GetMapping("/assigned")
-        public Flux<Grievance> getAssignedGrievances(
-                        @RequestHeader("X-USER-ID") String officerId,
-                        @RequestHeader("X-USER-ROLE") String role) {
-
-                return grievanceService.getAssignedGrievances(officerId, role);
-        }
-
-        @GetMapping("/my")
-        public Mono<ResponseEntity<?>> myGrievances(@RequestHeader("X-USER-ID") String userId) {
-                return grievanceService
-                                .getGrievancesByCitizen(userId)
-                                .collectList()
-                                .map(ResponseEntity::ok);
-        }
-
         @GetMapping("/{grievanceId}/history")
-        public Mono<ResponseEntity<?>> history(@PathVariable String grievanceId) {
-                return grievanceHistoryRepository
-                                .findByGrievanceId(grievanceId)
-                                .collectList()
-                                .map(ResponseEntity::ok);
+        public Mono<ResponseEntity<List<GrievanceStatusHistory>>> history(
+                @PathVariable String grievanceId,
+                @RequestHeader("X-USER-ID") String userId,
+                @RequestHeader("X-USER-ROLE") String role) {
+            return grievanceService.getGrievanceHistory(grievanceId, userId, role)
+                    .collectList()
+                    .map(ResponseEntity::ok);
         }
 
         @GetMapping("/citizen/{citizenId}")
@@ -181,15 +169,21 @@ public class GrievanceController {
         }
         
         @GetMapping("/{grievanceId}/documents")
-        public Flux<GrievanceDocument> getGrievanceDocuments(@PathVariable String grievanceId) {
-            return grievanceService.getGrievanceDocuments(grievanceId);
+        public Flux<GrievanceDocument> getGrievanceDocuments(
+                @PathVariable String grievanceId,
+                @RequestHeader("X-USER-ID") String userId,
+                @RequestHeader("X-USER-ROLE") String role) {
+            return grievanceService.getGrievanceDocuments(grievanceId, userId, role);
         }
 
         @GetMapping("/{grievanceId}/documents/{documentId}")
         public Mono<ResponseEntity<Resource>> downloadDocument(
                 @PathVariable String grievanceId,
-                @PathVariable String documentId) {
-            return grievanceService.downloadDocument(grievanceId, documentId)
+                @PathVariable String documentId,
+                @RequestHeader("X-USER-ID") String userId,
+                @RequestHeader("X-USER-ROLE") String role) {
+            
+            return grievanceService.downloadDocument(grievanceId, documentId, userId, role)
                     .map(resource -> ResponseEntity.ok()
                             .header(HttpHeaders.CONTENT_DISPOSITION,
                                     "attachment; filename=\"" + resource.getFilename() + "\"")
