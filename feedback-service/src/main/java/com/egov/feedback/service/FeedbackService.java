@@ -1,10 +1,17 @@
 package com.egov.feedback.service;
 
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.egov.feedback.dto.FeedbackRequest;
 import com.egov.feedback.dto.GrievanceResponse;
+import com.egov.feedback.exception.AccessDeniedException;
 import com.egov.feedback.model.Feedback;
 import com.egov.feedback.repository.FeedbackRepository;
 
@@ -21,7 +28,7 @@ public class FeedbackService {
     public Mono<String> submitFeedback(String citizenId, String role, FeedbackRequest request) {
 
         if (!"CITIZEN".equalsIgnoreCase(role)) {
-            return Mono.error(new IllegalArgumentException("Only CITIZEN can submit feedback"));
+            return Mono.error(new AccessDeniedException("Only CITIZEN can submit feedback"));
         }
 
         return feedbackRepository.findByGrievanceId(request.getGrievanceId())
@@ -36,8 +43,7 @@ public class FeedbackService {
                                     }
 
                                     if (!citizenId.equals(grievance.getCitizenId())) {
-                                        return Mono.error(new IllegalArgumentException(
-                                                "You can only submit feedback for your own grievances"));
+                                        return Mono.error(new AccessDeniedException("You can only submit feedback for your own grievances"));
                                     }
 
                                     Feedback feedback = Feedback.builder()

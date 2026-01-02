@@ -567,7 +567,8 @@ public class GrievanceService {
                             .then();
                 }));
     }
-
+    
+    //get by dept and status - optional request parameters
     public Flux<Grievance> getGrievances(String statusStr, String departmentId, String role, String userId) {
         GRIEVANCE_STATUS status = (statusStr != null && !statusStr.isBlank())
                 ? GRIEVANCE_STATUS.valueOf(statusStr.toUpperCase())
