@@ -70,7 +70,7 @@ public class UserService {
                                                 .createdAt(Instant.now())
                                                 .build();
                                     }))
-                                    
+
                                     .flatMap(user -> userRepository.save(user));
 
                         }))
@@ -152,26 +152,33 @@ public class UserService {
         }
         return Mono.empty();
     }
+
     
-    
-    
+
     public Mono<UserResponse> updateProfile(
             String targetUserId,
             UserUpdateRequest request,
             String loggedInUserId,
             ROLE loggedInUserRole)
     {
-    	if (!targetUserId.equals(loggedInUserId)) {
-    	    return Mono.error(new ForbiddenException(
-    	            "You cannot update another user's profile"));
-    	}
+        if (!targetUserId.equals(loggedInUserId)) {
+            return Mono.error(new ForbiddenException(
+                    "You cannot update another user's profile"));
+        }
         return userRepository.findById(targetUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
                 .flatMap(user -> {
                     if (request.getName() != null && !request.getName().isBlank()) {
+                        if (user.getName().equals(request.getName())) {
+                            return Mono.error(new IllegalArgumentException("New name cannot be same as existing name"));
+                        }
                         user.setName(request.getName());
                     }
                     if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                        if (user.getEmail().equals(request.getEmail())) {
+                            return Mono
+                                    .error(new IllegalArgumentException("New email cannot be same as existing email"));
+                        }
                         return userRepository.findByEmail(request.getEmail())
                                 .filter(u -> !u.getId().equals(targetUserId))
                                 .flatMap(existing -> Mono.<User>error(new UserAlreadyExistsException("Email already in use")))
@@ -187,66 +194,73 @@ public class UserService {
                 .map(this::mapToResponse);
     }
 
-    public Mono<UserResponse> updateRole(
+    public Mono<Void> updateRole(
             String targetUserId,
             String roleName,
             String loggedInUserId,
             ROLE loggedInUserRole)
  {
-    	if (loggedInUserRole != ROLE.ADMIN) {
-    	    return Mono.error(new ForbiddenException(
-    	            "Only ADMIN can update user roles"));
-    	}
+        if (loggedInUserRole != ROLE.ADMIN) {
+            return Mono.error(new ForbiddenException(
+                    "Only ADMIN can update user roles"));
+        }
 
         ROLE newRole = resolveRole(roleName);
-        
+
         return userRepository.findById(targetUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
                 .flatMap(user -> {
+                    if (user.getRole() == newRole) {
+                        return Mono.error(new IllegalArgumentException("New role cannot be same as current role"));
+                    }
                     user.setRole(newRole);
                     if (newRole == ROLE.CITIZEN) {
                         user.setDepartmentId(null);
                     }
                     return userRepository.save(user);
                 })
-                .map(this::mapToResponse);
+                .then();
     }
 
-    public Mono<UserResponse> updateDepartment(
+    public Mono<Void> updateDepartment(
             String targetUserId,
             String departmentId,
             String loggedInUserId,
             ROLE loggedInUserRole)
  {
-    	if (loggedInUserRole != ROLE.ADMIN) {
-    	    return Mono.error(new ForbiddenException(
-    	            "Only ADMIN can assign departments"));
-    	}
-    	
+        if (loggedInUserRole != ROLE.ADMIN) {
+            return Mono.error(new ForbiddenException(
+                    "Only ADMIN can assign departments"));
+        }
+
         return userRepository.findById(targetUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
                 .flatMap(user -> {
-                	if (user.getRole() == ROLE.CITIZEN) {
-                	    return Mono.error(new IllegalArgumentException(
-                	            "Citizen cannot be assigned a department"));
-                	}
+                    if (user.getRole() == ROLE.CITIZEN) {
+                        return Mono.error(new IllegalArgumentException(
+                                "Citizen cannot be assigned a department"));
+                    }
+                    if (departmentId.equals(user.getDepartmentId())) {
+                        return Mono.error(
+                                new IllegalArgumentException("New department cannot be same as current department"));
+                    }
                     return validateDepartmentFromGrievanceService(user.getRole(), departmentId)
                             .then(Mono.defer(() -> {
                                 user.setDepartmentId(departmentId);
                                 return userRepository.save(user);
                             }));
                 })
-                .map(this::mapToResponse);
+                .then();
     }
 
     public Flux<UserResponse> getUsersByRole(
             String roleName,
             ROLE loggedInUserRole)
 	{
-    	if (loggedInUserRole != ROLE.ADMIN) {
-    	    return Flux.error(new ForbiddenException(
-    	            "Only ADMIN can view users by role"));
-    	}
+        if (loggedInUserRole != ROLE.ADMIN) {
+            return Flux.error(new ForbiddenException(
+                    "Only ADMIN can view users by role"));
+        }
 
         ROLE role = resolveRole(roleName);
         return userRepository.findByRole(role)

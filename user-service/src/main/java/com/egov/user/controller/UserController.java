@@ -30,24 +30,12 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-    // INTERNAL API
-    // Used by grievance-service during escalation
-    @GetMapping("/supervisor/department/{departmentId}")
-    public Mono<String> getSupervisorByDepartment(
-            @PathVariable String departmentId) {
-
-        return userRepository
-                .findByRoleAndDepartmentId(ROLE.SUPERVISOR, departmentId)
-                .map(User::getId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Supervisor not found for department " + departmentId)));
-    }
-
     @GetMapping("/{id}")
     public Mono<UserResponse> getUserById(@PathVariable String id) {
-    	
+
     	//--to check load balancing
     	//System.out.println("User Service Instance received request for User ID: " + id);
-    	
+
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new com.egov.user.exception.ResourceNotFoundException("User not found")))
                 .map(user -> UserResponse.builder()
@@ -60,24 +48,37 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    public Mono<UserResponse> updateProfile(@PathVariable String userId, @RequestBody UserUpdateRequest request,@RequestHeader("X-USER-ID") String loggedInUserId,
-            @RequestHeader("X-USER-ROLE") String loggedInUserRole ) {
-    	return userService.updateProfile(userId,request,loggedInUserId,ROLE.valueOf(loggedInUserRole));
+    public Mono<Void> updateProfile(@PathVariable String userId, @RequestBody UserUpdateRequest request,
+            @RequestHeader("X-USER-ID") String loggedInUserId,
+            @RequestHeader("X-USER-ROLE") String loggedInUserRole) {
+        return userService.updateProfile(userId, request, loggedInUserId, ROLE.valueOf(loggedInUserRole)).then();
     }
 
     @PutMapping("/{userId}/role/{role}")
-    public Mono<UserResponse> updateUserRole(@PathVariable String userId,@PathVariable String role,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
-        return userService.updateRole(userId,role,loggedInUserId,ROLE.valueOf(loggedInUserRole));
+    public Mono<Void> updateUserRole(@PathVariable String userId, @PathVariable String role,
+            @RequestHeader("X-USER-ID") String loggedInUserId, @RequestHeader("X-USER-ROLE") String loggedInUserRole) {
+        return userService.updateRole(userId, role, loggedInUserId, ROLE.valueOf(loggedInUserRole));
     }
 
-
     @PutMapping("/{userId}/department/{departmentId}")
-    public Mono<UserResponse> assignDepartment(@PathVariable String userId, @PathVariable String departmentId ,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
+    public Mono<Void> assignDepartment(@PathVariable String userId, @PathVariable String departmentId ,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
     	return userService.updateDepartment(userId,departmentId,loggedInUserId,ROLE.valueOf(loggedInUserRole));
     }
 
     @GetMapping("/role/{role}")
     public Flux<UserResponse> getUsersByRole(@PathVariable String role,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
     	return userService.getUsersByRole(role,ROLE.valueOf(loggedInUserRole));
+    }
+
+    // INTERNAL API
+    // Used by grievance-service during escalation
+    @GetMapping("/supervisor/department/{departmentId}")
+    public Mono<String> getSupervisorByDepartment(
+            @PathVariable String departmentId) {
+
+        return userRepository
+                .findByRoleAndDepartmentId(ROLE.SUPERVISOR, departmentId)
+                .map(User::getId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Supervisor not found for department " + departmentId)));
     }
 }

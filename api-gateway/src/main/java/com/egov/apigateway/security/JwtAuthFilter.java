@@ -57,7 +57,7 @@ public class JwtAuthFilter implements GlobalFilter {
 			String role = claims.get("role", String.class);
 
 			// role-based route - authorization
-			if (!hasAccess(path, role, method, internalCall)) {
+			if (!hasAccess(path, role, method, internalCall, userId)) {
 				exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
 				return exchange.getResponse().setComplete();
 			}
@@ -75,7 +75,7 @@ public class JwtAuthFilter implements GlobalFilter {
 	}
 
 	//role->route map  (role based security)
-	private boolean hasAccess(String path, String role, String method,String internalCall) {
+	private boolean hasAccess(String path, String role, String method,String internalCall, String tokenUserId) {
 
 		// assign grievance
 		if (path.matches(".*/grievances/.*/assign") && method.equals("PUT")) {
@@ -105,6 +105,13 @@ public class JwtAuthFilter implements GlobalFilter {
 		if (path.startsWith("/users/supervisor/department") && method.equals("GET")) {
 			return "true".equalsIgnoreCase(internalCall); // trust internal call
 		}
+
+		if (path.matches("/users/[^/]+$") && method.equals("GET")) {
+            if ("true".equalsIgnoreCase(internalCall)) return true;
+            if (role.equals("ADMIN")) return true;
+            String pathId = path.substring(path.lastIndexOf('/') + 1);
+            return pathId.equals(tokenUserId);
+        }
 
 		// update own profile
 		if (path.matches("/users/[^/]+$") && method.equals("PUT")) {
