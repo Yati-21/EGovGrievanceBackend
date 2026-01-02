@@ -39,4 +39,11 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(ex.getStatusCode())
                                 .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Error occurred"));
         }
+        
+        @ExceptionHandler(ServiceUnavailableException.class)
+        public ResponseEntity<Map<String, String>> handleServiceDown(ServiceUnavailableException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE) 
+                    .body(Map.of("error", ex.getMessage()));
+        }
 }

@@ -16,9 +16,11 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .authorizeExchange(ex -> ex
-                        .pathMatchers("/auth/**").permitAll()
-                        .anyExchange().permitAll()
-                )
+               	    .pathMatchers("/auth/**").permitAll()
+               	    .pathMatchers("/reference/**").permitAll()
+//                	    .anyExchange().authenticated()
+                	    .anyExchange().permitAll()
+                		)
                 .build();
     }
 }

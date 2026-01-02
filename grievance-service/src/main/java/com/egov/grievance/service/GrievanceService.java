@@ -7,13 +7,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+
 import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.dto.UserResponse;
 import com.egov.grievance.event.GrievanceStatusChangedEvent;
+import com.egov.grievance.exception.ServiceUnavailableException;
 import com.egov.grievance.exception.UserNotFoundException;
 import com.egov.grievance.model.GRIEVANCE_STATUS;
 import com.egov.grievance.model.Grievance;
@@ -37,7 +42,9 @@ public class GrievanceService {
         private final ReferenceDataService referenceDataService;
         private final WebClient.Builder webClientBuilder;
         private final GrievanceEventPublisher grievanceEventPublisher;
-
+        
+        private static final String USER_SERVICE_CB = "userServiceCB";
+        private final ReactiveCircuitBreakerFactory<?, ?> circuitBreakerFactory;
 
         public Mono<String> createGrievance(String userId, String role, CreateGrievanceRequest request,Flux<FilePart> files) {
                 if (!"CITIZEN".equalsIgnoreCase(role)) {
@@ -395,6 +402,7 @@ public class GrievanceService {
                 return grievanceRepository.findByCitizenId(citizenId);
         }
 
+        
         public Mono<Void> escalateGrievance(String grievanceId,String citizenId,String role) 
         {
             if (!"CITIZEN".equalsIgnoreCase(role)) {
@@ -434,8 +442,8 @@ public class GrievanceService {
 
                                 return webClientBuilder.build()
                                     .get()
-                                    .uri("http://user-service/users/supervisor/department/{departmentId}",
-                                                    grievance.getDepartmentId())
+                                    .uri("http://user-service/users/supervisor/department/{departmentId}",grievance.getDepartmentId())
+                                    .header("X-INTERNAL-CALL", "true")
                                     .retrieve()
                                     .bodyToMono(String.class)
                                     .flatMap(supervisorId -> 
@@ -471,15 +479,31 @@ public class GrievanceService {
                 });
         }
 
+//        private Mono<UserResponse> fetchUserById(String userId, String errorMessage) {
+//                return webClientBuilder.build()
+//                        .get()
+//                        .uri("http://user-service/users/{id}", userId)
+//                        .retrieve()
+//                        .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
+//                                        response -> Mono.error(new IllegalArgumentException(errorMessage)))
+//                        .bodyToMono(UserResponse.class);
+//        }
         private Mono<UserResponse> fetchUserById(String userId, String errorMessage) {
-                return webClientBuilder.build()
+
+            ReactiveCircuitBreaker cb =circuitBreakerFactory.create(USER_SERVICE_CB);
+
+            Mono<UserResponse> call =
+                    webClientBuilder.build()
                         .get()
                         .uri("http://user-service/users/{id}", userId)
                         .retrieve()
-                        .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
-                                        response -> Mono.error(new IllegalArgumentException(errorMessage)))
+                        .onStatus(HttpStatusCode::is4xxClientError,response -> Mono.error(new IllegalArgumentException(errorMessage)))
                         .bodyToMono(UserResponse.class);
+            return cb.run(call,ex -> Mono.error(new ServiceUnavailableException("User service unavailable"))
+            );
         }
+        
+        
         public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId) {
             return grievanceRepository.existsById(grievanceId)
                     .flatMapMany(exists -> {
@@ -540,5 +564,75 @@ public class GrievanceService {
                                                     .then(grievanceDocumentRepository.save(doc))
                                                     .then();
                             }));
+    }
+        
+        public Flux<Grievance> getGrievances(String statusStr, String departmentId, String role, String userId) {
+            GRIEVANCE_STATUS status = (statusStr != null && !statusStr.isBlank()) ? GRIEVANCE_STATUS.valueOf(statusStr.toUpperCase()) : null;
+
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                // admin can filter or view all
+                if (departmentId != null && status != null) {
+                    return grievanceRepository.findByDepartmentIdAndStatus(departmentId, status);
+                } 
+                else if (departmentId != null) {
+                    return grievanceRepository.findByDepartmentId(departmentId);
+                } 
+                else if (status != null) {
+                    return grievanceRepository.findByStatus(status);
+                } 
+                else {
+                    return grievanceRepository.findAll();
+                }
+            } 
+            else if ("SUPERVISOR".equalsIgnoreCase(role)) {
+                // get supervisor profile to get the correct dept id
+                return fetchUserById(userId, "Supervisor not found")
+                       .flatMapMany(user -> {
+                           // use the department from the user profile( ignore the passed deptId)
+                           if (status != null) {
+                               return grievanceRepository.findByDepartmentIdAndStatus(user.getDepartmentId(), status);
+                           } 
+                           else {
+                               return grievanceRepository.findByDepartmentId(user.getDepartmentId());
+                           }
+                       });
+            } 
+            else if ("OFFICER".equalsIgnoreCase(role)) {
+                // get officer profile -to validate 
+                return fetchUserById(userId, "Officer not found")
+                       .flatMapMany(user -> {
+                            // pfficer can only view their assigned grievances
+                            if (status != null) {
+                                return grievanceRepository.findByAssignedOfficerIdAndStatus(userId, status);
+                            } 
+                            else {
+                                return grievanceRepository.findByAssignedOfficerId(userId);
+                            }
+                       });
+            }
+            return Flux.empty();
+        }
+
+        public Flux<Grievance> getSlaBreaches(String userId, String role) {
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERVISOR".equalsIgnoreCase(role)) {
+            return Flux.error(new IllegalArgumentException("Only ADMIN or SUPERVISOR can view SLA breaches"));
+        }
+
+        // get all grievances that are not resolved/closed to calculate SLA for each
+        return grievanceRepository.findAll()
+                .filter(g -> g.getStatus() != GRIEVANCE_STATUS.RESOLVED && g.getStatus() != GRIEVANCE_STATUS.CLOSED)
+                .flatMap(grievance -> {
+                    // If already escalated- its at risk.
+                    if (Boolean.TRUE.equals(grievance.getIsEscalated())) {
+                        return Mono.just(grievance);
+                    }
+                    // Check  sla from  data
+                    return referenceDataService.getSlaHours(grievance.getDepartmentId(), grievance.getCategoryId())
+                            .filter(slaHours -> {
+                                long hoursElapsed = Duration.between(grievance.getCreatedAt(), Instant.now()).toHours();
+                                return hoursElapsed > slaHours;
+                            })
+                            .map(sla -> grievance);
+                });
     }
 }

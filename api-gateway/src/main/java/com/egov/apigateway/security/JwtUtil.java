@@ -17,6 +17,9 @@ public class JwtUtil {
     private final SecretKey secretKey;
 
     public JwtUtil(@Value("${jwt.secret}") String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("jwt.secret not configured");
+        }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
