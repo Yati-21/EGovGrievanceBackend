@@ -1,0 +1,1 @@
+To check which env file is being used: docker inspect notification-service
