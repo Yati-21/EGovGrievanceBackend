@@ -537,14 +537,14 @@ public class GrievanceService {
 
     private Mono<Void> saveFile(FilePart filePart, String grievanceId, String userId) {
         return Mono.fromRunnable(() -> {
-            String uploadDir = "C:/Users/YATI/Desktop/EGovGrievance/uploads/" + grievanceId;
+            String uploadDir = "uploads/" + grievanceId;
             File dir = new java.io.File(uploadDir);
             if (!dir.exists()) {
                 dir.mkdirs();
             }
         }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
                 .then(Mono.defer(() -> {
-                    String uploadDir = "C:/Users/YATI/Desktop/EGovGrievance/uploads/" + grievanceId;
+                    String uploadDir = "uploads/" + grievanceId;
                     String fileName = filePart.filename();
                     Path filePath = Paths.get(uploadDir, fileName);
 
