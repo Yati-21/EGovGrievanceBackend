@@ -1,11 +1,13 @@
 package com.egov.reporting.service;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.egov.reporting.client.GrievanceClient;
 import com.egov.reporting.client.UserClient;
 import com.egov.reporting.dto.GrievanceDTO;
@@ -21,45 +23,63 @@ public class ReportService {
     private final GrievanceClient grievanceClient;
     private final UserClient userClient;
 
-    public Flux<GrievanceDTO> getGrievancesByStatus(String userId, String role, String status) {
-        return grievanceClient.getGrievances(userId, role, status, null);
+    public Flux<GrievanceDTO> getGrievances(String userId, String role, String status, String departmentId) {
+        return grievanceClient.getGrievances(userId, role, status, departmentId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
     }
 
-    public Flux<GrievanceDTO> getGrievancesByDepartment(String userId, String role, String departmentId) {
-        return grievanceClient.getGrievances(userId, role, null, departmentId);
+    public Flux<GrievanceDTO> getSlaBreaches(String userId, String role) {
+        return grievanceClient.getSlaBreaches(userId, role)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No SLA breaches found")));
     }
 
-    public Mono<Double> getAverageResolutionTime(String userId, String role, String departmentId) {
-        return grievanceClient.getGrievances(userId, role, "RESOLVED", departmentId)
+    public Mono<Map<String, Object>> getAverageResolutionTime(String userId, String role, String departmentId) {
+        // include both RESOLVED and CLOSED
+        // then filter by resolvedAt
+        return grievanceClient.getGrievances(userId, role, null, departmentId)
                 .filter(g -> g.getResolvedAt() != null)
-                .collect(Collectors.averagingDouble(g -> 
-                    Duration.between(g.getCreatedAt(), g.getResolvedAt()).toHours()
-                ));
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available")))
+                .collect(Collectors
+                        .averagingDouble(g -> Duration.between(g.getCreatedAt(), g.getResolvedAt()).toMinutes()))
+                .flatMap(avg -> {
+                    if (avg.isNaN()) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available"));
+                    }
+                    return Mono.just(Map.of(
+                            "averageTime", avg,
+                            "unit", "minutes"));
+                });
     }
 
-    public Mono<Map<String, Long>> getDepartmentPerformance(String userId, String role) {
+    public Mono<Map<String, Integer>> getDepartmentPerformance(String userId, String role) {
         return grievanceClient.getGrievances(userId, role, null, null)
                 .collect(Collectors.groupingBy(
                         GrievanceDTO::getDepartmentId,
-                        Collectors.counting()
-                ));
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)))
+                .flatMap(map -> {
+                    if (map.isEmpty()) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available"));
+                    }
+                    return Mono.just(map);
+                });
     }
 
-    public Mono<Map<String, Long>> getUserGrievanceSummary(String targetUserId, String userId, String role) {
-        return userClient.validateUserExists(targetUserId)
-               .flatMap(exists -> {
-                   if (!exists) return Mono.error(new IllegalArgumentException("User not found"));
-                   
-                   return grievanceClient.getGrievances(userId, role, null, null)
-                       .filter(g -> targetUserId.equals(g.getCitizenId()))
-                       .collect(Collectors.groupingBy(
-                               GrievanceDTO::getStatus,
-                               Collectors.counting()
-                       ));
-               });
-   }
-
-   public Flux<GrievanceDTO> getSlaBreaches(String userId, String role) {
-       return grievanceClient.getSlaBreaches(userId, role);
-   }
+    public Mono<Map<String, Integer>> getUserGrievanceSummary(String targetUserId, String userId, String role) {
+        return userClient.validateUserExists(targetUserId, userId, role)
+                .flatMap(exists -> {
+                    if (!exists)
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                    return grievanceClient.getGrievances(userId, role, null, null)
+                            .filter(g -> targetUserId.equals(g.getCitizenId()))
+                            .collect(Collectors.groupingBy(
+                                    GrievanceDTO::getStatus,
+                                    Collectors.collectingAndThen(Collectors.counting(), Long::intValue)))
+                            .flatMap(map -> {
+                                if (map.isEmpty()) {
+                                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available"));
+                                }
+                                return Mono.just(map);
+                            });
+                });
+    }
 }

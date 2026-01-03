@@ -1,10 +1,5 @@
 package com.egov.feedback.service;
 
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -67,7 +62,12 @@ public class FeedbackService {
                 .header("X-USER-ROLE", role)
                 .retrieve()
                 .onStatus(org.springframework.http.HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new IllegalArgumentException("Grievance not found")))
+                        response -> {
+                            if (response.statusCode() == HttpStatus.FORBIDDEN) {
+                                return Mono.error(new AccessDeniedException("Access denied to grievance"));
+                            }
+                            return Mono.error(new IllegalArgumentException("Grievance not found"));
+                        })
                 .bodyToMono(GrievanceResponse.class);
     }
 

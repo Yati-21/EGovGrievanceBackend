@@ -97,6 +97,10 @@ public class JwtAuthFilter implements GlobalFilter {
             return role.equals("ADMIN")|| role.equals("SUPERVISOR")|| role.equals("OFFICER");
 		}
 
+		// specific: user summary report (allow CITIZEN, OFFICER, SUPERVISOR, ADMIN)
+		if (path.startsWith("/reports/user/") && method.equals("GET")) {
+			return role.equals("ADMIN") || role.equals("SUPERVISOR") || role.equals("OFFICER") || role.equals("CITIZEN");
+		}
         //reports
 		if (path.startsWith("/reports") && method.equals("GET")) {
 			return role.equals("ADMIN") || role.equals("SUPERVISOR") || role.equals("OFFICER");

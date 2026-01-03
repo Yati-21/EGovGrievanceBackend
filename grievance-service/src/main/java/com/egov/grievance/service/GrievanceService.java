@@ -115,8 +115,7 @@ public class GrievanceService {
                         supervisorValidation = fetchUserById(assignedBy, "Assigned By user not found")
                                 .flatMap(supervisor -> {
                                     if (!grievance.getDepartmentId().equals(supervisor.getDepartmentId())) {
-                                        return Mono.error(new IllegalArgumentException(
-                                                "Supervisor can only assign grievances for their own department"));
+                                        return Mono.error( new ResponseStatusException(HttpStatus.FORBIDDEN,"Supervisor can only assign grievances for their own department"));
                                     }
                                     return Mono.empty();
                                 });
@@ -281,9 +280,9 @@ public class GrievanceService {
         return grievanceRepository.findById(grievanceId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
                 .flatMap(grievance -> {
-                	if ("OFFICER".equalsIgnoreCase(role) && !userId.equals(grievance.getAssignedOfficerId())) {
+                    if ("OFFICER".equalsIgnoreCase(role) && !userId.equals(grievance.getAssignedOfficerId())) {
                         return Mono.error(new IllegalArgumentException("You can only close grievances assigned to you"));
-                	}
+                    }
                     if (grievance.getStatus() != GRIEVANCE_STATUS.RESOLVED) {
                         return Mono.error(new IllegalArgumentException(
                                 "Only RESOLVED grievance can be closed"));
@@ -503,7 +502,7 @@ public class GrievanceService {
                 .bodyToMono(UserResponse.class);
         return cb.run(call, ex -> Mono.error(new ServiceUnavailableException("User service unavailable")));
     }
-    
+
     public Flux<GrievanceStatusHistory> getGrievanceHistory(String grievanceId, String userId, String role) {
         return getGrievanceById(grievanceId, userId, role)
                 // if valid- get history
@@ -511,31 +510,29 @@ public class GrievanceService {
     }
 
     public Flux<GrievanceDocument> getGrievanceDocuments(String grievanceId, String userId, String role) {
-    	return getGrievanceById(grievanceId, userId, role)
-    			.flatMapMany(grievance -> grievanceDocumentRepository.findByGrievanceId(grievanceId));
+        return getGrievanceById(grievanceId, userId, role)
+                .flatMapMany(grievance -> grievanceDocumentRepository.findByGrievanceId(grievanceId));
     }
 
-    
-
     public Mono<Resource> downloadDocument(String grievanceId, String documentId, String userId, String role) {
-    	return getGrievanceById(grievanceId, userId, role)
+        return getGrievanceById(grievanceId, userId, role)
                 .flatMap(grievance -> grievanceDocumentRepository.findById(documentId)
-                            .switchIfEmpty(
-                                    Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")))
-                            .flatMap(doc -> {
-                                if (!doc.getGrievanceId().equals(grievanceId)) {
-                                    return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                            "Document does not belong to this grievance"));
-                                }
-                                Path path = Paths.get(doc.getFilePath());
-                                Resource resource = new FileSystemResource(path);
-                                if (resource.exists() && resource.isReadable()) {
-                                    return Mono.just(resource);
-                                } else {
-                                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                            "File not found on server"));
-                                }
-                }));
+                        .switchIfEmpty(
+                                Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found")))
+                        .flatMap(doc -> {
+                            if (!doc.getGrievanceId().equals(grievanceId)) {
+                                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Document does not belong to this grievance"));
+                            }
+                            Path path = Paths.get(doc.getFilePath());
+                            Resource resource = new FileSystemResource(path);
+                            if (resource.exists() && resource.isReadable()) {
+                                return Mono.just(resource);
+                            } else {
+                                return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                        "File not found on server"));
+                            }
+                        }));
     }
 
     private Mono<Void> saveFile(FilePart filePart, String grievanceId, String userId) {
@@ -567,7 +564,7 @@ public class GrievanceService {
                             .then();
                 }));
     }
-    
+
     //get by dept and status - optional request parameters
     public Flux<Grievance> getGrievances(String statusStr, String departmentId, String role, String userId) {
         GRIEVANCE_STATUS status = (statusStr != null && !statusStr.isBlank())
@@ -577,9 +574,11 @@ public class GrievanceService {
         if ("ADMIN".equalsIgnoreCase(role)) {
             // admin can filter or view all
             if (departmentId != null && status != null) {
-                return grievanceRepository.findByDepartmentIdAndStatus(departmentId, status);
+                return referenceDataService.validateDepartmentOnly(departmentId)
+                        .thenMany(grievanceRepository.findByDepartmentIdAndStatus(departmentId, status));
             } else if (departmentId != null) {
-                return grievanceRepository.findByDepartmentId(departmentId);
+                return referenceDataService.validateDepartmentOnly(departmentId)
+                        .thenMany(grievanceRepository.findByDepartmentId(departmentId));
             } else if (status != null) {
                 return grievanceRepository.findByStatus(status);
             } else {
@@ -617,7 +616,7 @@ public class GrievanceService {
         }
         return Flux.empty();
     }
-    
+
     public Flux<Grievance> getGrievancesByCitizen(String citizenId, String userId, String role) {
         if ("ADMIN".equalsIgnoreCase(role)) 
         {
@@ -635,26 +634,28 @@ public class GrievanceService {
     }
 
     public Flux<Grievance> getGrievancesByDepartment(String departmentId, String userId, String role) {
-         if ("ADMIN".equalsIgnoreCase(role)) {
-             return grievanceRepository.findByDepartmentId(departmentId)
-                    .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
-         }
-         if ("SUPERVISOR".equalsIgnoreCase(role)) {
-              return fetchUserById(userId, "Supervisor not found")
-                   .flatMapMany(user -> {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return referenceDataService.validateDepartmentOnly(departmentId)
+                    .thenMany(grievanceRepository.findByDepartmentId(departmentId))
+                    .switchIfEmpty(
+                            Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
+        }
+        if ("SUPERVISOR".equalsIgnoreCase(role)) {
+            return fetchUserById(userId, "Supervisor not found")
+                    .flatMapMany(user -> {
                         if (!user.getDepartmentId().equals(departmentId)) {
                             return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only view grievances of your own department"));
                         }
                         return grievanceRepository.findByDepartmentId(departmentId)
                                 .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
-                   });
-         }
-         return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+                    });
+        }
+        return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
     }
 
     public Flux<Grievance> getSlaBreaches(String userId, String role) {
         if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERVISOR".equalsIgnoreCase(role)) {
-            return Flux.error(new IllegalArgumentException("Only ADMIN or SUPERVISOR can view SLA breaches"));
+            return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN,"Only ADMIN or SUPERVISOR can view SLA breaches"));
         }
 
         // get all grievances that are not resolved/closed to calculate SLA for each

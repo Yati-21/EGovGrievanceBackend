@@ -13,9 +13,11 @@ public class UserClient {
         this.client = builder.baseUrl("http://user-service").build();
     }
 
-    public Mono<Boolean> validateUserExists(String userId) {
+    public Mono<Boolean> validateUserExists(String userId, String requesterId, String requesterRole) {
         return client.get()
                 .uri("/users/{id}", userId)
+                .header("X-USER-ID", requesterId)
+                .header("X-USER-ROLE", requesterRole)
                 .retrieve()
                 .toBodilessEntity()
                 .map(response -> response.getStatusCode().is2xxSuccessful())

@@ -28,7 +28,7 @@ public class ReportController {
             @PathVariable String status,
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader("X-USER-ROLE") String role) {
-        return reportService.getGrievancesByStatus(userId, role, status);
+        return reportService.getGrievances(userId, role, status, null);
     }
 
     @GetMapping("/grievances/department/{departmentId}")
@@ -36,11 +36,11 @@ public class ReportController {
             @PathVariable String departmentId,
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader("X-USER-ROLE") String role) {
-        return reportService.getGrievancesByDepartment(userId, role, departmentId);
+        return reportService.getGrievances(userId, role, null, departmentId);
     }
 
     @GetMapping("/avg-resolution-time")
-    public Mono<ResponseEntity<Double>> getAvgResolutionTime(
+    public Mono<ResponseEntity<Map<String, Object>>> getAvgResolutionTime(
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader("X-USER-ROLE") String role) {
         return reportService.getAverageResolutionTime(userId, role, null)
@@ -48,7 +48,7 @@ public class ReportController {
     }
 
     @GetMapping("/avg-resolution-time/department/{departmentId}")
-    public Mono<ResponseEntity<Double>> getDeptAvgResolutionTime(
+    public Mono<ResponseEntity<Map<String, Object>>> getDeptAvgResolutionTime(
             @PathVariable String departmentId,
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader("X-USER-ROLE") String role) {
@@ -57,7 +57,7 @@ public class ReportController {
     }
 
     @GetMapping("/department-performance")
-    public Mono<ResponseEntity<Map<String, Long>>> getDepartmentPerformance(
+    public Mono<ResponseEntity<Map<String, Integer>>> getDepartmentPerformance(
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader("X-USER-ROLE") String role) {
         return reportService.getDepartmentPerformance(userId, role)
@@ -65,7 +65,7 @@ public class ReportController {
     }
 
     @GetMapping("/user/{targetUserId}")
-    public Mono<ResponseEntity<Map<String, Long>>> getUserSummary(
+    public Mono<ResponseEntity<Map<String, Integer>>> getUserSummary(
             @PathVariable String targetUserId,
             @RequestHeader("X-USER-ID") String userId,
             @RequestHeader("X-USER-ROLE") String role) {
