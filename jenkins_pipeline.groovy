@@ -99,20 +99,22 @@ pipeline {
         //         }
         //     }
         // }
-        stage('SonarQube integration') 
-        {
-            steps 
-            {
-                withCredentials([string(credentialsId: 'SONAR-TOKEN', variable: 'SONAR_TOKEN')]) 
-                {
+        stage('SonarQube integration') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'SONAR-TOKEN',
+                    usernameVariable: 'SONAR_USER',
+                    passwordVariable: 'SONAR_TOKEN'
+                )]) {
                     bat """
-                    mvn -DskipTests verify ^
-                    -Dsonar.projectKey=Yati-21 ^
+                    mvn verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar ^
+                    -Dsonar.projectKey=Yati-21_EGovGrievanceBackend ^
                     -Dsonar.token=%SONAR_TOKEN%
                     """
                 }
             }
         }
+
         
         // stage('Deploy with Docker') {
         //     steps {
