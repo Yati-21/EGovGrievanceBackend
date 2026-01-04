@@ -18,8 +18,8 @@ public class JwtUtil {
     private final long expirationMillis;
 
     public JwtUtil(
-            @Value("${jwt.secret}:egov-secret-key-should-be-very-long-and-secure-256bit") String secret,
-            @Value("${jwt.expiration}") long expirationMillis) {
+            @Value("${jwt.secret:egov-secret-key-should-be-very-long-and-secure-256bit}") String secret,
+            @Value("${jwt.expiration:86400000}") long expirationMillis) {
 
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         this.expirationMillis = expirationMillis;

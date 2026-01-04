@@ -16,7 +16,7 @@ public class JwtUtil {
 
     private final SecretKey secretKey;
 
-    public JwtUtil(@Value("${jwt.secret}:egov-secret-key-should-be-very-long-and-secure-256bit") String secret) {
+    public JwtUtil(@Value("${jwt.secret:egov-secret-key-should-be-very-long-and-secure-256bit}") String secret) {
         if (secret == null || secret.isBlank()) {
             throw new IllegalStateException("jwt.secret not configured");
         }
