@@ -662,8 +662,7 @@ public class GrievanceService {
             return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN,"Only ADMIN or SUPERVISOR can view SLA breaches"));
         }
 
-        // get all grievances that are not resolved/closed to calculate SLA for each
-        return grievanceRepository.findAll()
+        Flux<Grievance> baseBreaches = grievanceRepository.findAll()
                 .filter(g -> g.getStatus() != GRIEVANCE_STATUS.RESOLVED && g.getStatus() != GRIEVANCE_STATUS.CLOSED)
                 .flatMap(grievance -> {
                     // If already escalated- its at risk.
@@ -678,5 +677,13 @@ public class GrievanceService {
                             })
                             .map(sla -> grievance);
                 });
+
+        if ("SUPERVISOR".equalsIgnoreCase(role)) {
+            // get supervisor department to filter
+            return fetchUserById(userId, "Supervisor not found")
+                    .flatMapMany(user -> baseBreaches.filter(g -> user.getDepartmentId().equals(g.getDepartmentId())));
+        }
+
+        return baseBreaches;
     }
 }
