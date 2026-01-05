@@ -18,28 +18,21 @@ import reactor.test.StepVerifier;
 @ExtendWith(MockitoExtension.class)
 class GrievanceHistoryServiceTest {
 
-    @Mock
-    private GrievanceHistoryRepository repository;
+	@Mock
+	private GrievanceHistoryRepository repository;
 
-    @InjectMocks
-    private GrievanceHistoryService service;
+	@InjectMocks
+	private GrievanceHistoryService service;
 
-    @Test
-    void createInitialHistory() {
-        when(repository.save(any()))
-                .thenReturn(Mono.just(new GrievanceStatusHistory()));
+	@Test
+	void createInitialHistory() {
+		when(repository.save(any())).thenReturn(Mono.just(new GrievanceStatusHistory()));
+		StepVerifier.create(service.createInitialHistory("g1", "u1")).expectNext("g1").verifyComplete();
+	}
 
-        StepVerifier.create(service.createInitialHistory("g1", "u1"))
-                .expectNext("g1")
-                .verifyComplete();
-    }
-
-    @Test
-    void addHistory() {
-        when(repository.save(any()))
-                .thenReturn(Mono.just(new GrievanceStatusHistory()));
-
-        StepVerifier.create(service.addHistory("g1", null, null, "u1"))
-                .verifyComplete();
-    }
+	@Test
+	void addHistory() {
+		when(repository.save(any())).thenReturn(Mono.just(new GrievanceStatusHistory()));
+		StepVerifier.create(service.addHistory("g1", null, null, "u1")).verifyComplete();
+	}
 }
