@@ -267,6 +267,31 @@ public class UserService {
                 .map(this::mapToResponse);
     }
 
+    public Flux<UserResponse> getOfficersByDepartment(
+            String departmentId,
+            String loggedInUserId,
+            ROLE loggedInUserRole) {
+
+        // ADMIN can see all officers in any dept
+        // SUPERVISOR can only see officers in their dept
+        if (loggedInUserRole == ROLE.ADMIN) {
+            return userRepository.findByRoleAndDepartmentId(ROLE.OFFICER, departmentId)
+                    .map(this::mapToResponse);
+        } else if (loggedInUserRole == ROLE.SUPERVISOR) {
+            return userRepository.findById(loggedInUserId)
+                    .flatMapMany(supervisor -> {
+                        if (supervisor.getDepartmentId() == null
+                                || !supervisor.getDepartmentId().equals(departmentId)) {
+                            return Flux.error(new ForbiddenException(
+                                    "Supervisor can only view officers of their own department"));
+                        }
+                        return userRepository.findByRoleAndDepartmentId(ROLE.OFFICER, departmentId)
+                                .map(this::mapToResponse);
+                    });
+        }
+        return Flux.error(new ForbiddenException("Access denied"));
+    }
+
     private UserResponse mapToResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

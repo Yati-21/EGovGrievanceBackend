@@ -11,7 +11,10 @@ import reactor.core.publisher.Mono;
 public interface UserRepository extends ReactiveMongoRepository<User, String> 
 {
 	Mono<User> findByEmail(String email);
-	Mono<User> findByRoleAndDepartmentId(ROLE role, String departmentId);
+
+	Flux<User> findByRoleAndDepartmentId(ROLE role, String departmentId);
+
 	Flux<User> findByRole(ROLE role);
+
 	Mono<User> findById(String id);
 }

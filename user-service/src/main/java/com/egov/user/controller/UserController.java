@@ -61,13 +61,22 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/department/{departmentId}")
-    public Mono<Void> assignDepartment(@PathVariable String userId, @PathVariable String departmentId ,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
-    	return userService.updateDepartment(userId,departmentId,loggedInUserId,ROLE.valueOf(loggedInUserRole));
+    public Mono<Void> assignDepartment(@PathVariable String userId, @PathVariable String departmentId,
+            @RequestHeader("X-USER-ID") String loggedInUserId, @RequestHeader("X-USER-ROLE") String loggedInUserRole) {
+        return userService.updateDepartment(userId, departmentId, loggedInUserId, ROLE.valueOf(loggedInUserRole));
     }
 
     @GetMapping("/role/{role}")
     public Flux<UserResponse> getUsersByRole(@PathVariable String role,@RequestHeader("X-USER-ID") String loggedInUserId,@RequestHeader("X-USER-ROLE") String loggedInUserRole) {
     	return userService.getUsersByRole(role,ROLE.valueOf(loggedInUserRole));
+    }
+
+    @GetMapping("/department/{departmentId}/officers")
+    public Flux<UserResponse> getOfficersByDepartment(
+            @PathVariable String departmentId,
+            @RequestHeader("X-USER-ID") String loggedInUserId,
+            @RequestHeader("X-USER-ROLE") String loggedInUserRole) {
+        return userService.getOfficersByDepartment(departmentId, loggedInUserId, ROLE.valueOf(loggedInUserRole));
     }
 
     // INTERNAL API
@@ -78,7 +87,9 @@ public class UserController {
 
         return userRepository
                 .findByRoleAndDepartmentId(ROLE.SUPERVISOR, departmentId)
+                .next()
                 .map(User::getId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Supervisor not found for department " + departmentId)));
+                .switchIfEmpty(Mono
+                        .error(new IllegalArgumentException("Supervisor not found for department " + departmentId)));
     }
 }
