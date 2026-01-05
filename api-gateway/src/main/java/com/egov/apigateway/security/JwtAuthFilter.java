@@ -14,6 +14,13 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class JwtAuthFilter implements GlobalFilter {
+	
+	private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_SUPERVISOR = "SUPERVISOR";
+    private static final String ROLE_OFFICER = "OFFICER";
+    private static final String ROLE_CITIZEN = "CITIZEN";
+    private static final String METHOD_PUT = "PUT";
+    private static final String METHOD_GET = "GET";
 
 	private final JwtUtil jwtUtil;
 
@@ -77,55 +84,55 @@ public class JwtAuthFilter implements GlobalFilter {
 	private boolean hasAccess(String path, String role, String method,String internalCall, String tokenUserId) {
 
 		// assign grievance
-		if (path.matches(".*/grievances/.*/assign") && method.equals("PUT")) {
-			return role.equals("ADMIN") || role.equals("SUPERVISOR");
+		if (path.matches(".*/grievances/.*/assign") && method.equals(METHOD_PUT)) {
+			return role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERVISOR);
 		}
 
 		// escalate grievance
-		if (path.matches(".*/grievances/.*/escalate") && method.equals("PUT")) {
-			return role.equals("CITIZEN");
+		if (path.matches(".*/grievances/.*/escalate") && method.equals(METHOD_PUT)) {
+			return role.equals(ROLE_CITIZEN);
 		}
 
         //officer-only 
-        if ((path.matches(".*/grievances/.*/in-review")|| path.matches(".*/grievances/.*/resolve")) && method.equals("PUT")) {
-			return role.equals("OFFICER");
+        if ((path.matches(".*/grievances/.*/in-review")|| path.matches(".*/grievances/.*/resolve")) && method.equals(METHOD_PUT)) {
+			return role.equals(ROLE_OFFICER);
 		}
 
         //close grievance
-		if (path.matches(".*/grievances/.*/close") && method.equals("PUT")) {
-            return role.equals("ADMIN")|| role.equals("SUPERVISOR")|| role.equals("OFFICER");
+		if (path.matches(".*/grievances/.*/close") && method.equals(METHOD_PUT)) {
+            return role.equals(ROLE_ADMIN)|| role.equals(ROLE_SUPERVISOR)|| role.equals(ROLE_OFFICER);
 		}
 
 		// specific: user summary report (allow CITIZEN, OFFICER, SUPERVISOR, ADMIN)
-		if (path.startsWith("/reports/user/") && method.equals("GET")) {
-			return role.equals("ADMIN") || role.equals("SUPERVISOR") || role.equals("OFFICER") || role.equals("CITIZEN");
+		if (path.startsWith("/reports/user/") && method.equals(METHOD_GET)) {
+			return role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERVISOR) || role.equals(ROLE_OFFICER) || role.equals(ROLE_CITIZEN);
 		}
         //reports
-		if (path.startsWith("/reports") && method.equals("GET")) {
-			return role.equals("ADMIN") || role.equals("SUPERVISOR") || role.equals("OFFICER");
+		if (path.startsWith("/reports") && method.equals(METHOD_GET)) {
+			return role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERVISOR) || role.equals(ROLE_OFFICER);
 		}
 
-		if (path.startsWith("/users/supervisor/department") && method.equals("GET")) {
+		if (path.startsWith("/users/supervisor/department") && method.equals(METHOD_GET)) {
 			return "true".equalsIgnoreCase(internalCall); // trust internal call
 		}
 
-		if (path.matches("/users/[^/]+$") && method.equals("GET")) {
+		if (path.matches("/users/[^/]+$") && method.equals(METHOD_GET)) {
             if ("true".equalsIgnoreCase(internalCall)) return true;
-            if (role.equals("ADMIN")) return true;
+            if (role.equals(ROLE_ADMIN)) return true;
             String pathId = path.substring(path.lastIndexOf('/') + 1);
             return pathId.equals(tokenUserId);
         }
 
 		// update own profile
-		if (path.matches("/users/[^/]+$") && method.equals("PUT")) {
-            return role.equals("CITIZEN") || role.equals("OFFICER")|| role.equals("SUPERVISOR") || role.equals("ADMIN");
+		if (path.matches("/users/[^/]+$") && method.equals(METHOD_PUT)) {
+            return role.equals(ROLE_CITIZEN) || role.equals(ROLE_OFFICER)|| role.equals(ROLE_SUPERVISOR) || role.equals(ROLE_ADMIN);
 		}
 
 		// admin-only operations
-		if (path.matches("/users/.*/role/.*") && method.equals("PUT")
-				|| path.matches("/users/.*/department/.*") && method.equals("PUT")
-				|| path.startsWith("/users/role/") && method.equals("PUT")) {
-			return role.equals("ADMIN");
+		if (path.matches("/users/.*/role/.*") && method.equals(METHOD_PUT)
+				|| path.matches("/users/.*/department/.*") && method.equals(METHOD_PUT)
+				|| path.startsWith("/users/role/") && method.equals(METHOD_PUT)) {
+			return role.equals(ROLE_ADMIN);
 		}
 
 		// default -- authenticated user allowed
