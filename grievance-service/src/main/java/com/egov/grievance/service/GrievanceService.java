@@ -418,6 +418,10 @@ public class GrievanceService {
                                                 grievance.getDepartmentId())
                                         .header("X-INTERNAL-CALL", "true")
                                         .retrieve()
+                                        .onStatus(HttpStatusCode::is4xxClientError,
+                                                response -> Mono.error(new IllegalArgumentException(
+                                                        "No Supervisor assigned to department: "
+                                                                + grievance.getDepartmentId())))
                                         .bodyToMono(String.class)
                                         .flatMap(supervisorId -> {
                                             grievance.setStatus(GRIEVANCE_STATUS.ESCALATED);
