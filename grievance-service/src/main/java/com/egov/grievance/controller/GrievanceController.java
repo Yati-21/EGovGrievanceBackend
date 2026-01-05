@@ -44,11 +44,9 @@ public class GrievanceController {
 
         private final GrievanceService grievanceService;
 
-        @Autowired
-        private GrievanceHistoryRepository grievanceHistoryRepository;
+        private final GrievanceHistoryRepository grievanceHistoryRepository;
 
-        @Autowired
-        private GrievanceRepository grievanceRepository;
+        private final GrievanceRepository grievanceRepository;
 
         @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public Mono<ResponseEntity<String>> createGrievance(
