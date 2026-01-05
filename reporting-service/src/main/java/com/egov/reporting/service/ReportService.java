@@ -70,15 +70,16 @@ public class ReportService {
                     if (!exists)
                         return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
                     return grievanceClient.getGrievances(userId, role, null, null)
-                            .filter(g -> targetUserId.equals(g.getCitizenId()))
+                            .filter(g -> targetUserId.equals(userId) || targetUserId.equals(g.getCitizenId())
+                                    || targetUserId.equals(g.getAssignedOfficerId()))
                             .collect(Collectors.groupingBy(
                                     GrievanceDTO::getStatus,
                                     Collectors.collectingAndThen(Collectors.counting(), Long::intValue)))
-                            .flatMap(map -> {
+                            .map(map -> {
                                 if (map.isEmpty()) {
-                                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available"));
+                                    return Map.<String, Integer>of();
                                 }
-                                return Mono.just(map);
+                                return map;
                             });
                 });
     }
