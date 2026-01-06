@@ -33,7 +33,7 @@ class AuthControllerTest {
         RegisterRequest request = new RegisterRequest();
         request.setName("Test");
         request.setEmail("test@test.com");
-        request.setPassword("pass123");
+        request.setPassword("StrongPass1!");
 
         Mockito.when(userService.register(Mockito.any()))
                 .thenReturn(Mono.just("user123"));
@@ -50,7 +50,7 @@ class AuthControllerTest {
     void login_success() {
         LoginRequest request = new LoginRequest();
         request.setEmail("test@test.com");
-        request.setPassword("pass123");
+        request.setPassword("StrongPass1!");
 
         Mockito.when(userService.login(Mockito.any()))
                 .thenReturn(Mono.just(new LoginResponse("token","id","ADMIN")));

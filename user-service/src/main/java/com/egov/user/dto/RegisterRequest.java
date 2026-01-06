@@ -2,6 +2,7 @@ package com.egov.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "Password is mandatory")
     @Size(min = 5, max = 50, message = "Password must be between 5 and 50 characters")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{6,20}$",message = "Password must contain at least one digit, one lowercase, one uppercase, and one special character")
     private String password;
 
     

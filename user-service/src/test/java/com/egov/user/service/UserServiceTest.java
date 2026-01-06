@@ -68,7 +68,7 @@ class UserServiceTest {
                 RegisterRequest req = new RegisterRequest();
                 req.setName("Test");
                 req.setEmail("test@test.com");
-                req.setPassword("pass123");
+                req.setPassword("StrongPass1!");
 
                 when(userRepository.findByEmail(req.getEmail()))
                                 .thenReturn(Mono.empty());
@@ -99,7 +99,7 @@ class UserServiceTest {
         void login_success() {
                 LoginRequest req = new LoginRequest();
                 req.setEmail("test@test.com");
-                req.setPassword("pass123");
+                req.setPassword("StrongPass1!");
 
                 when(userRepository.findByEmail(req.getEmail()))
                                 .thenReturn(Mono.just(user));
@@ -120,7 +120,7 @@ class UserServiceTest {
         void login_wrongPassword() {
                 LoginRequest req = new LoginRequest();
                 req.setEmail("test@test.com");
-                req.setPassword("wrong");
+                req.setPassword("StrongPass1234!");
 
                 when(userRepository.findByEmail(req.getEmail()))
                                 .thenReturn(Mono.just(user));
@@ -210,7 +210,7 @@ class UserServiceTest {
         void login_emailNotFound() {
                 LoginRequest req = new LoginRequest();
                 req.setEmail("missing@test.com");
-                req.setPassword("pass");
+                req.setPassword("StrongPass1!");
 
                 when(userRepository.findByEmail(req.getEmail()))
                                 .thenReturn(Mono.empty());
@@ -333,7 +333,7 @@ class UserServiceTest {
                 RegisterRequest req = new RegisterRequest();
                 req.setName("Officer");
                 req.setEmail("off@test.com");
-                req.setPassword("pass");
+                req.setPassword("StrongPass1!");
                 req.setRole("OFFICER");
                 req.setDepartmentId("D1");
 
