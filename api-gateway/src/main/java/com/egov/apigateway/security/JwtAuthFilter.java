@@ -103,11 +103,16 @@ public class JwtAuthFilter implements GlobalFilter {
             return role.equals(ROLE_ADMIN)|| role.equals(ROLE_SUPERVISOR)|| role.equals(ROLE_OFFICER);
 		}
 
-		// specific: user summary report (allow CITIZEN, OFFICER, SUPERVISOR, ADMIN)
+		// user summary report (allow CITIZEN, OFFICER, SUPERVISOR, ADMIN)
 		if (path.startsWith("/reports/user/") && method.equals(METHOD_GET)) {
 			return role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERVISOR) || role.equals(ROLE_OFFICER) || role.equals(ROLE_CITIZEN);
 		}
-        //reports
+		// department performance (allow CITIZEN, ADMIN)
+		if (path.equals("/reports/department-performance") && method.equals(METHOD_GET)) {
+			return role.equals(ROLE_ADMIN) || role.equals(ROLE_CITIZEN);
+		}
+
+		// reports
 		if (path.startsWith("/reports") && method.equals(METHOD_GET)) {
 			return role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERVISOR) || role.equals(ROLE_OFFICER);
 		}
@@ -119,9 +124,9 @@ public class JwtAuthFilter implements GlobalFilter {
 		if (path.matches("/users/[^/]+$") && method.equals(METHOD_GET)) {
             if ("true".equalsIgnoreCase(internalCall)) return true;
             if (role.equals(ROLE_ADMIN)) return true;
-            String pathId = path.substring(path.lastIndexOf('/') + 1);
-            return pathId.equals(tokenUserId);
-        }
+			String pathId = path.substring(path.lastIndexOf('/') + 1);
+			return pathId.equals(tokenUserId);
+		}
 
 		// update own profile
 		if (path.matches("/users/[^/]+$") && method.equals(METHOD_PUT)) {
