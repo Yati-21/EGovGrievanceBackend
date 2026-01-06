@@ -79,4 +79,10 @@ public class ReportController {
             @RequestHeader("X-USER-ROLE") String role) {
         return reportService.getSlaBreaches(userId, role);
     }
+
+    @GetMapping("/public/stats")
+    public Mono<ResponseEntity<Map<String, Object>>> getPublicStats() {
+        return reportService.getPublicStats()
+                .map(ResponseEntity::ok);
+    }
 }

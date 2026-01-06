@@ -20,8 +20,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ReportService {
 
-	private static final String NO_DATA = "No data available";
-	
+    private static final String NO_DATA = "No data available";
+
     private final GrievanceClient grievanceClient;
     private final UserClient userClient;
 
@@ -83,6 +83,39 @@ public class ReportService {
                                 }
                                 return map;
                             });
+                });
+    }
+
+    public Mono<Map<String, Object>> getPublicStats() {
+        return grievanceClient.getGrievances("SYSTEM", "ADMIN", null, null)
+                .collectList()
+                .map(grievances -> {
+                    long total = grievances.size();
+                    if (total == 0) {
+                        return Map.of(
+                                "resolvedCount", 0,
+                                "resolutionRate", 0.0,
+                                "avgResolutionTime", 0.0);
+                    }
+
+                    long resolvedCount = grievances.stream()
+                            .filter(g -> "RESOLVED".equals(g.getStatus()) || "CLOSED".equals(g.getStatus()))
+                            .count();
+
+                    double resolutionRate = ((double) resolvedCount / total) * 100;
+
+                    //average resolution time - resolved/closed 
+                    double avgTimeHours = grievances.stream()
+                            .filter(g -> ("RESOLVED".equals(g.getStatus()) || "CLOSED".equals(g.getStatus()))
+                                    && g.getResolvedAt() != null && g.getCreatedAt() != null)
+                            .mapToLong(g -> Duration.between(g.getCreatedAt(), g.getResolvedAt()).toMinutes())
+                            .average()
+                            .orElse(0.0) / 60.0;
+
+                    return Map.<String, Object>of(
+                            "resolvedCount", resolvedCount,
+                            "resolutionRate", Math.round(resolutionRate * 10.0) / 10.0, // round to 1 decimal
+                            "avgResolutionTime", Math.round(avgTimeHours * 10.0) / 10.0);
                 });
     }
 }

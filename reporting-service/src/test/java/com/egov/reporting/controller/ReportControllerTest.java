@@ -131,4 +131,22 @@ class ReportControllerTest {
                 .expectBody()
                 .jsonPath("$.OPEN").isEqualTo(2);
     }
+    @Test
+    void getPublicStats_EndpointTest() {
+        Map<String, Object> stats = Map.of(
+            "resolvedCount", 10,
+            "resolutionRate", 85.5,
+            "avgResolutionTime", 4.2
+        );
+
+        when(reportService.getPublicStats()).thenReturn(Mono.just(stats));
+
+        webTestClient.get()
+                .uri("/reports/public/stats")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.resolvedCount").isEqualTo(10)
+                .jsonPath("$.resolutionRate").isEqualTo(85.5);
+    }
 }

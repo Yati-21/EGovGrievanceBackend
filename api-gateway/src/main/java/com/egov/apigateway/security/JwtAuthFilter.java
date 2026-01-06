@@ -29,7 +29,7 @@ public class JwtAuthFilter implements GlobalFilter {
 	}
 
 	//public endpoints (no jwt required)
-	private static final List<String> PUBLIC_PATHS = List.of("/auth/login","/auth/register", "/reference");
+	private static final List<String> PUBLIC_PATHS = List.of("/auth/login","/auth/register", "/reference","/reports/public");
 
 
 	@Override
