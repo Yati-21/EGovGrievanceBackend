@@ -1,7 +1,6 @@
 package com.egov.user.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -19,11 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.egov.user.dto.LoginRequest;
-import com.egov.user.dto.LoginResponse;
 import com.egov.user.dto.RegisterRequest;
 import com.egov.user.dto.UserUpdateRequest;
 import com.egov.user.exception.ForbiddenException;
-import com.egov.user.exception.ResourceNotFoundException;
 import com.egov.user.exception.UserAlreadyExistsException;
 import com.egov.user.model.ROLE;
 import com.egov.user.model.User;

@@ -12,7 +12,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.egov.user.dto.UserResponse;
 import com.egov.user.dto.UserUpdateRequest;
-import com.egov.user.exception.ResourceNotFoundException;
 import com.egov.user.model.ROLE;
 import com.egov.user.repository.UserRepository;
 import com.egov.user.service.UserService;

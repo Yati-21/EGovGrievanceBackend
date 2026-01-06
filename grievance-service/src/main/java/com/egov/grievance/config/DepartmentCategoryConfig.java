@@ -10,6 +10,7 @@ import java.util.Map;
 
 @Component
 public class DepartmentCategoryConfig {
+	private static final String CATEGORIES = "categories";
 
 	private Map<String, Map<String, Object>> departments;
 
@@ -23,7 +24,7 @@ public class DepartmentCategoryConfig {
 			this.departments = (Map<String, Map<String, Object>>) root.get("departments");
 
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to load department-category config", e);
+			throw new IllegalArgumentException("Failed to load department-category config", e);
 		}
 	}
 
@@ -33,7 +34,7 @@ public class DepartmentCategoryConfig {
 
     public Map<String, Object> getCategories(String departmentId) {
         if (departments != null && departments.containsKey(departmentId)) {
-            return (Map<String, Object>) departments.get(departmentId).get("categories");
+            return (Map<String, Object>) departments.get(departmentId).get(CATEGORIES);
         }
         return Map.of();
     }
@@ -43,7 +44,7 @@ public class DepartmentCategoryConfig {
 			return false;
 		}
 		return departments.containsKey(departmentId)
-				&& ((Map<?, ?>) departments.get(departmentId).get("categories")).containsKey(categoryId);
+				&& ((Map<?, ?>) departments.get(departmentId).get(CATEGORIES)).containsKey(categoryId);
 	}
 
 	public boolean isValidDepartment(String departmentId) {
@@ -60,7 +61,7 @@ public class DepartmentCategoryConfig {
 		}
 
 		Map<String, Object> dept = departments.get(departmentId);
-		Map<String, Object> categories = (Map<String, Object>) dept.get("categories");
+		Map<String, Object> categories = (Map<String, Object>) dept.get(CATEGORIES);
 
 		if (!categories.containsKey(categoryId)) {
 			throw new IllegalArgumentException("Invalid category");

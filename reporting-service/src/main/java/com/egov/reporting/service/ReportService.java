@@ -20,6 +20,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ReportService {
 
+	private static final String NO_DATA = "No data available";
+	
     private final GrievanceClient grievanceClient;
     private final UserClient userClient;
 
@@ -38,12 +40,12 @@ public class ReportService {
         // then filter by resolvedAt
         return grievanceClient.getGrievances(userId, role, null, departmentId)
                 .filter(g -> g.getResolvedAt() != null)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available")))
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, NO_DATA)))
                 .collect(Collectors
                         .averagingDouble(g -> Duration.between(g.getCreatedAt(), g.getResolvedAt()).toMinutes()))
                 .flatMap(avg -> {
                     if (avg.isNaN()) {
-                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available"));
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, NO_DATA));
                     }
                     return Mono.just(Map.of(
                             "averageTime", avg,
@@ -58,7 +60,7 @@ public class ReportService {
                         Collectors.collectingAndThen(Collectors.counting(), Long::intValue)))
                 .flatMap(map -> {
                     if (map.isEmpty()) {
-                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No data available"));
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, NO_DATA));
                     }
                     return Mono.just(map);
                 });

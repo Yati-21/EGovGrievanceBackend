@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailService {
 
         private final JavaMailSender mailSender;
+        private static final String UTF = "UTF-8";
 
         public void sendCitizenMail(
                         String to,
@@ -26,7 +27,7 @@ public class EmailService {
 
                 try {
                         MimeMessage message = mailSender.createMimeMessage();
-                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF);
 
                         helper.setTo(to);
                         helper.setSubject("Grievance Status Update");
@@ -64,7 +65,7 @@ public class EmailService {
 
                 try {
                         MimeMessage message = mailSender.createMimeMessage();
-                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF);
 
                         helper.setTo(to);
                         helper.setSubject("Grievance Action Required");
@@ -101,7 +102,7 @@ public class EmailService {
 
                 try {
                         MimeMessage message = mailSender.createMimeMessage();
-                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF);
 
                         helper.setTo(to);
                         helper.setSubject("Grievance Escalated");

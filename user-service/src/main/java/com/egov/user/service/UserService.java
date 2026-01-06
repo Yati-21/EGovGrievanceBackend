@@ -44,6 +44,9 @@ public class UserService {
         this.jwtUtil = jwtUtil;
         this.webClientBuilder = webClientBuilder;
     }
+    
+
+	private static final String USER_NOT_FOUND = "User not found";
 
     public Mono<String> register(RegisterRequest request) {
 
@@ -166,7 +169,7 @@ public class UserService {
                     "You cannot update another user's profile"));
         }
         return userRepository.findById(targetUserId)
-                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(USER_NOT_FOUND)))
                 .flatMap(user -> {
                     if (request.getName() != null && !request.getName().isBlank()) {
                         if (user.getName().equals(request.getName())) {
@@ -208,7 +211,7 @@ public class UserService {
         ROLE newRole = resolveRole(roleName);
 
         return userRepository.findById(targetUserId)
-                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(USER_NOT_FOUND)))
                 .flatMap(user -> {
                     if (user.getRole() == newRole) {
                         return Mono.error(new IllegalArgumentException("New role cannot be same as current role"));
@@ -234,7 +237,7 @@ public class UserService {
         }
 
         return userRepository.findById(targetUserId)
-                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(USER_NOT_FOUND)))
                 .flatMap(user -> {
                     if (user.getRole() == ROLE.CITIZEN) {
                         return Mono.error(new IllegalArgumentException(

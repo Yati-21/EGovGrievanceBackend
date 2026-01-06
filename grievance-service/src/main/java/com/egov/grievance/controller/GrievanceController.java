@@ -1,9 +1,7 @@
 package com.egov.grievance.controller;
 
 import java.util.List;
-import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +26,6 @@ import com.egov.grievance.service.GrievanceService;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import com.egov.grievance.model.GrievanceDocument;
 import com.egov.grievance.model.GrievanceStatusHistory;
 

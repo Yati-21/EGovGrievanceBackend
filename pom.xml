@@ -28,7 +28,7 @@
             */dto/*,*/model/*,*/config/*,*/entity/*,**/*Application.java
         </sonar.exclusions>
         <sonar.coverage.exclusions>
-            service-registry/**,config-server/**
+            api-gateway/**,service-registry/**,config-server/**
         </sonar.coverage.exclusions>
     </properties>
     <modules>

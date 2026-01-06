@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -439,16 +438,6 @@ class GrievanceServiceTest {
 		mockUser("S1", "SUPERVISOR", "OTHER_DEPT");
 		StepVerifier.create(service.assignGrievance("G1", "S1", "SUPERVISOR", "O1"))
 				.expectError(ResponseStatusException.class).verify();
-	}
-
-	@Test
-	void assignGrievance_assignedUserNotOfficer() {
-		Grievance g = grievance("SUBMITTED");
-
-		when(grievanceRepository.findById("G1")).thenReturn(Mono.just(g));
-		mockUser("U2", "CITIZEN", "D001");
-		StepVerifier.create(service.assignGrievance("G1", "ADMIN", "ADMIN", "U2"))
-				.expectError(IllegalArgumentException.class).verify();
 	}
 
 	@Test

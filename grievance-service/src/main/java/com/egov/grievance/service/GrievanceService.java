@@ -37,6 +37,13 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class GrievanceService {
+	private static final String ROLE_CITIZEN = "CITIZEN";
+	private static final String ROLE_SUPERVISOR = "SUPERVISOR";
+	private static final String ROLE_ADMIN = "ADMIN";
+	private static final String ROLE_OFFICER = "OFFICER";
+	private static final String GRIEVANCE_NOT_FOUND = "Grievance not found";
+	private static final String SUPERVISOR_NOT_FOUND = "Supervisor not found";
+	private static final String ACCESS_DENIED = "Access Denied";
 
     private final GrievanceRepository grievanceRepository;
     private final GrievanceDocumentRepository grievanceDocumentRepository;
@@ -51,7 +58,7 @@ public class GrievanceService {
 
     public Mono<String> createGrievance(String userId, String role, CreateGrievanceRequest request,
             Flux<FilePart> files) {
-        if (!"CITIZEN".equalsIgnoreCase(role)) {
+        if (!ROLE_CITIZEN.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException("Only CITIZEN can create grievances"));
         }
         return referenceDataService
@@ -96,12 +103,12 @@ public class GrievanceService {
 
     public Mono<Void> assignGrievance(String grievanceId, String assignedBy, String role, String officerId) {
 
-        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERVISOR".equalsIgnoreCase(role)) {
+        if (!ROLE_ADMIN.equalsIgnoreCase(role) && !ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException("Only ADMIN or SUPERVISOR can assign grievances"));
         }
 
         return grievanceRepository.findById(grievanceId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
                     if (grievance.getStatus() != GRIEVANCE_STATUS.SUBMITTED
                             && grievance.getStatus() != GRIEVANCE_STATUS.REOPENED
@@ -111,7 +118,7 @@ public class GrievanceService {
                     }
                     // if assigned by SUPERVISOR -validate their department
                     Mono<Void> supervisorValidation;
-                    if ("SUPERVISOR".equalsIgnoreCase(role)) {
+                    if (ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
                         supervisorValidation = fetchUserById(assignedBy, "Assigned By user not found")
                                 .flatMap(supervisor -> {
                                     if (!grievance.getDepartmentId().equals(supervisor.getDepartmentId())) {
@@ -127,7 +134,7 @@ public class GrievanceService {
                     Mono<Void> officerValidation = fetchUserById(officerId,
                             "Officer not found with id: " + officerId)
                             .flatMap(officer -> {
-                                if (!"OFFICER".equalsIgnoreCase(officer.getRole())) {
+                                if (!ROLE_OFFICER.equalsIgnoreCase(officer.getRole())) {
                                     return Mono.error(new IllegalArgumentException(
                                             "Assigned user is not an OFFICER"));
                                 }
@@ -173,13 +180,13 @@ public class GrievanceService {
             String officerId,
             String role) {
 
-        if (!"OFFICER".equalsIgnoreCase(role)) {
+        if (!ROLE_OFFICER.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException(
                     "Only OFFICER can start review"));
         }
 
         return grievanceRepository.findById(grievanceId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
                     if (!officerId.equals(grievance.getAssignedOfficerId())) {
                         return Mono.error(new IllegalArgumentException(
@@ -218,14 +225,14 @@ public class GrievanceService {
             String officerId,
             String role) {
 
-        if (!"OFFICER".equalsIgnoreCase(role)) {
+        if (!ROLE_OFFICER.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException(
                     "Only OFFICER can resolve grievances"));
         }
 
         return grievanceRepository.findById(grievanceId)
                 .switchIfEmpty(Mono.error(
-                        new IllegalArgumentException("Grievance not found")))
+                        new IllegalArgumentException(GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
 
                     if (!officerId.equals(grievance.getAssignedOfficerId())) {
@@ -270,17 +277,17 @@ public class GrievanceService {
             String userId,
             String role) {
 
-        if (!"ADMIN".equalsIgnoreCase(role)
-                && !"SUPERVISOR".equalsIgnoreCase(role)
-                && !"OFFICER".equalsIgnoreCase(role)) {
+        if (!ROLE_ADMIN.equalsIgnoreCase(role)
+                && !ROLE_SUPERVISOR.equalsIgnoreCase(role)
+                && !ROLE_OFFICER.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException(
                     "Only ADMIN, SUPERVISOR or OFFICER can close grievance"));
         }
 
         return grievanceRepository.findById(grievanceId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
-                    if ("OFFICER".equalsIgnoreCase(role) && !userId.equals(grievance.getAssignedOfficerId())) {
+                    if (ROLE_OFFICER.equalsIgnoreCase(role) && !userId.equals(grievance.getAssignedOfficerId())) {
                         return Mono.error(new IllegalArgumentException("You can only close grievances assigned to you"));
                     }
                     if (grievance.getStatus() != GRIEVANCE_STATUS.RESOLVED) {
@@ -318,13 +325,13 @@ public class GrievanceService {
             String citizenId,
             String role) {
 
-        if (!"CITIZEN".equalsIgnoreCase(role)) {
+        if (!ROLE_CITIZEN.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException("Only CITIZEN can reopen grievance"));
         }
 
         return grievanceRepository.findById(grievanceId)
                 .switchIfEmpty(Mono.error(
-                        new IllegalArgumentException("Grievance not found")))
+                        new IllegalArgumentException(GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
 
                     if (!citizenId.equals(grievance.getCitizenId())) {
@@ -380,12 +387,12 @@ public class GrievanceService {
     }
 
     public Mono<Void> escalateGrievance(String grievanceId, String citizenId, String role) {
-        if (!"CITIZEN".equalsIgnoreCase(role)) {
+        if (!ROLE_CITIZEN.equalsIgnoreCase(role)) {
             return Mono.error(new IllegalArgumentException("Only CITIZEN can escalate grievance"));
         }
 
         return grievanceRepository.findById(grievanceId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Grievance not found")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
                     if (!citizenId.equals(grievance.getCitizenId())) {
                         return Mono.error(new IllegalArgumentException("Cannot escalate someone else's grievance"));
@@ -455,41 +462,41 @@ public class GrievanceService {
 
     public Mono<Grievance> getGrievanceById(String grievanceId, String userId, String role) {
         return grievanceRepository.findById(grievanceId)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Grievance not found")))
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, GRIEVANCE_NOT_FOUND)))
                 .flatMap(grievance -> {
-                    if ("ADMIN".equalsIgnoreCase(role)) {
+                    if (ROLE_ADMIN.equalsIgnoreCase(role)) {
                         return Mono.just(grievance);
                     }
 
-                    if ("CITIZEN".equalsIgnoreCase(role)) {
+                    if (ROLE_CITIZEN.equalsIgnoreCase(role)) {
                         if (grievance.getCitizenId().equals(userId)) {
                             return Mono.just(grievance);
                         } else {
-                            return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+                            return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ACCESS_DENIED));
                         }
                     }
-                    if ("OFFICER".equalsIgnoreCase(role)) {
+                    if (ROLE_OFFICER.equalsIgnoreCase(role)) {
                         if (userId.equals(grievance.getAssignedOfficerId())) {
                             return Mono.just(grievance);
                         } else {
-                            return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+                            return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ACCESS_DENIED));
                         }
                     }
 
-                    if ("SUPERVISOR".equalsIgnoreCase(role)) {
-                        return fetchUserById(userId, "Supervisor not found")
+                    if (ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
+                        return fetchUserById(userId, SUPERVISOR_NOT_FOUND)
                                 .flatMap(supervisor -> {
                                     if (grievance.getDepartmentId().equals(supervisor.getDepartmentId())) {
                                         return Mono.just(grievance);
                                     } else {
                                         return Mono.error(
-                                                new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+                                                new ResponseStatusException(HttpStatus.FORBIDDEN, ACCESS_DENIED));
                                     }
                                 });
                     }
 
                     // default denied
-                    return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+                    return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ACCESS_DENIED));
                 });
     }
 
@@ -575,7 +582,7 @@ public class GrievanceService {
                 ? GRIEVANCE_STATUS.valueOf(statusStr.toUpperCase())
                 : null;
 
-        if ("ADMIN".equalsIgnoreCase(role)) {
+        if (ROLE_ADMIN.equalsIgnoreCase(role)) {
             // admin can filter or view all
             if (departmentId != null && status != null) {
                 return referenceDataService.validateDepartmentOnly(departmentId)
@@ -588,9 +595,9 @@ public class GrievanceService {
             } else {
                 return grievanceRepository.findAll();
             }
-        } else if ("SUPERVISOR".equalsIgnoreCase(role)) {
+        } else if (ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
             // get supervisor profile to get the correct dept id
-            return fetchUserById(userId, "Supervisor not found")
+            return fetchUserById(userId, SUPERVISOR_NOT_FOUND)
                     .flatMapMany(user -> {
                         // use the department from the user profile( ignore the passed deptId)
                         if (status != null) {
@@ -599,7 +606,7 @@ public class GrievanceService {
                             return grievanceRepository.findByDepartmentId(user.getDepartmentId());
                         }
                     });
-        } else if ("OFFICER".equalsIgnoreCase(role)) {
+        } else if (ROLE_OFFICER.equalsIgnoreCase(role)) {
             // get officer profile -to validate
             return fetchUserById(userId, "Officer not found")
                     .flatMapMany(user -> {
@@ -611,7 +618,7 @@ public class GrievanceService {
                         }
                     });
         } 
-        else if ("CITIZEN".equalsIgnoreCase(role)) {
+        else if (ROLE_CITIZEN.equalsIgnoreCase(role)) {
             if (status != null) {
                 return grievanceRepository.findByCitizenIdAndStatus(userId, status);
             } else {
@@ -622,43 +629,43 @@ public class GrievanceService {
     }
 
     public Flux<Grievance> getGrievancesByCitizen(String citizenId, String userId, String role) {
-        if ("ADMIN".equalsIgnoreCase(role)) 
+        if (ROLE_ADMIN.equalsIgnoreCase(role)) 
         {
             return grievanceRepository.findByCitizenId(citizenId)
-                    .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
+                    .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, GRIEVANCE_NOT_FOUND)));
         }
-        if ("CITIZEN".equalsIgnoreCase(role)) {
+        if (ROLE_CITIZEN.equalsIgnoreCase(role)) {
             if (!citizenId.equals(userId)) {
                  return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only view your own grievances"));
             }
             return grievanceRepository.findByCitizenId(citizenId)
-                    .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
+                    .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, GRIEVANCE_NOT_FOUND)));
         }
-        return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+        return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ACCESS_DENIED));
     }
 
     public Flux<Grievance> getGrievancesByDepartment(String departmentId, String userId, String role) {
-        if ("ADMIN".equalsIgnoreCase(role)) {
+        if (ROLE_ADMIN.equalsIgnoreCase(role)) {
             return referenceDataService.validateDepartmentOnly(departmentId)
                     .thenMany(grievanceRepository.findByDepartmentId(departmentId))
                     .switchIfEmpty(
-                            Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
+                            Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, GRIEVANCE_NOT_FOUND)));
         }
-        if ("SUPERVISOR".equalsIgnoreCase(role)) {
-            return fetchUserById(userId, "Supervisor not found")
+        if (ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
+            return fetchUserById(userId, SUPERVISOR_NOT_FOUND)
                     .flatMapMany(user -> {
                         if (!user.getDepartmentId().equals(departmentId)) {
                             return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only view grievances of your own department"));
                         }
                         return grievanceRepository.findByDepartmentId(departmentId)
-                                .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No grievances found")));
+                                .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, GRIEVANCE_NOT_FOUND)));
                     });
         }
-        return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+        return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ACCESS_DENIED));
     }
 
     public Flux<Grievance> getSlaBreaches(String userId, String role) {
-        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERVISOR".equalsIgnoreCase(role)) {
+        if (!ROLE_ADMIN.equalsIgnoreCase(role) && !ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
             return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN,"Only ADMIN or SUPERVISOR can view SLA breaches"));
         }
 
@@ -678,9 +685,9 @@ public class GrievanceService {
                             .map(sla -> grievance);
                 });
 
-        if ("SUPERVISOR".equalsIgnoreCase(role)) {
+        if (ROLE_SUPERVISOR.equalsIgnoreCase(role)) {
             // get supervisor department to filter
-            return fetchUserById(userId, "Supervisor not found")
+            return fetchUserById(userId, SUPERVISOR_NOT_FOUND)
                     .flatMapMany(user -> baseBreaches.filter(g -> user.getDepartmentId().equals(g.getDepartmentId())));
         }
 

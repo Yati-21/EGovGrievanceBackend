@@ -25,7 +25,6 @@ public class SecurityConfig {
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/auth/**").permitAll()
                         .pathMatchers("/reference/**").permitAll()
-//                	    .anyExchange().authenticated()
                 	    .anyExchange().permitAll()
                 		)
                 .build();
