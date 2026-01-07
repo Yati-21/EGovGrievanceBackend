@@ -5,8 +5,6 @@ pipeline {
         jdk 'jdk21'
         maven 'Maven'
     }
-// pipeline {
-//     agent any
 
     stages {
         stage('Checkout Code') {
@@ -25,80 +23,78 @@ pipeline {
                 '''
             }
         }
-
-        
-        stage('Package Service Registry') {
+        stage('Package all') {
             steps {
-                dir('service-registry') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package Config Server') {
-            steps {
-                dir('config-server') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package API Gateway') {
-            steps {
-                dir('api-gateway') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package User Service') {
-            steps {
-                dir('user-service') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package Grievance Service') {
-            steps {
-                dir('grievance-service') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package feedback Service') {
-            steps {
-                dir('feedback-service') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package Notification Service') {
-            steps {
-                dir('notification-service') {
-                    bat "mvn package -DskipTests"
-                }
-            }
-        }
-
-        stage('Package Reporting Service') {
-            steps {
-                dir('reporting-service') {
-                    bat "mvn package -DskipTests"
-                }
+                bat "mvn package -DskipTests"
+                
             }
         }
         
-        // stage('SonarQube integration') {
+        // stage('Package Service Registry') {
         //     steps {
-        //         script{
-        //             sh "mvn -DskipTests verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar '-Dsonar.projectKey=Yati-21' '-Dsonar.token=credentials('SONAR-TOKEN')'"
-            
+        //         dir('service-registry') {
+        //             bat "mvn package -DskipTests"
         //         }
         //     }
         // }
+
+        // stage('Package Config Server') {
+        //     steps {
+        //         dir('config-server') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+
+        // stage('Package API Gateway') {
+        //     steps {
+        //         dir('api-gateway') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+
+        // stage('Package User Service') {
+        //     steps {
+        //         dir('user-service') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+
+        // stage('Package Grievance Service') {
+        //     steps {
+        //         dir('grievance-service') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+
+        // stage('Package feedback Service') {
+        //     steps {
+        //         dir('feedback-service') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+
+        // stage('Package Notification Service') {
+        //     steps {
+        //         dir('notification-service') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+
+        // stage('Package Reporting Service') {
+        //     steps {
+        //         dir('reporting-service') {
+        //             bat "mvn package -DskipTests"
+        //         }
+        //     }
+        // }
+        
+
         stage('SonarQube integration') {
             steps {
                 withCredentials([usernamePassword(
@@ -114,18 +110,6 @@ pipeline {
                 }
             }
         }
-
-        
-        // stage('Deploy with Docker') {
-        //     steps {
-        //         script {
-        //             withCredentials([file(credentialsId: 'Grievance-docker.env', variable: 'ENV_FILE')]) {
-        //                 sh 'cp $docker-env .env'
-        //                 sh 'docker-compose up -d --build'
-        //             }
-        //         }
-        //     }
-        // }
         
         stage('Deploy with Docker') 
         {

@@ -1,0 +1,2022 @@
+{
+	"info": {
+		"_postman_id": "aa27586b-b73e-4ccc-a6ee-5d84a52bbc63",
+		"name": "EGGRS (EGov Grievance Redressal System)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44959650",
+		"_collection_link": "https://yati-8972364.postman.co/workspace/Yati's-Workspace~9c760705-9548-4634-84c7-e442666a0d5c/collection/44959650-aa27586b-b73e-4ccc-a6ee-5d84a52bbc63?action=share&source=collection_link&creator=44959650"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Auth (User Service)-public",
+					"item": [
+						{
+							"name": "register",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"sup3\",\r\n    \"email\": \"sup76@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"role\":\"hk\",\r\n    \"departmentId\":\"D003\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/register",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "citizen login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const res = pm.response.json();\r",
+											"\r",
+											"pm.environment.set(\"citizen1_token\", res.token);\r",
+											"pm.environment.set(\"citizen1_id\", res.userId);\r",
+											"\r",
+											"pm.test(\"Login successful\", () => {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    // \"name\": \"yati\",\r\n    \"email\": \"yati.amity@gmail.com\",\r\n    \"password\": \"12345\"\r\n}\r\n\r\n\r\n// {\r\n//     // \"name\": \"super1\",\r\n//     \"email\": \"super1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\":\"Admin\",\r\n//     \"email\": \"admin@egov.com\",\r\n//     \"password\": \"Admin@123\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer1\",\r\n//     \"email\": \"officer1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"fd\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer2\",\r\n//     \"email\": \"officer2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup2\",\r\n//     \"email\": \"sup2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"off3\",\r\n//     \"email\": \"officer3@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"off3.2\",\r\n//     \"email\": \"officer3.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup3\",\r\n//     \"email\": \"sup3@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"citizen 2\",\r\n//     \"email\": \"yati1.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"officer 2.2\",\r\n//     \"email\": \"officer2.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "officer 3 login",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "// {\r\n//     // \"name\": \"yati\",\r\n//     \"email\": \"yati.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"super1\",\r\n//     \"email\": \"super1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\":\"Admin\",\r\n//     \"email\": \"admin@egov.com\",\r\n//     \"password\": \"Admin@123\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer1\",\r\n//     \"email\": \"officer1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"fd\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer2\",\r\n//     \"email\": \"officer2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup2\",\r\n//     \"email\": \"sup2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n{\r\n    // \"name\": \"off3\",\r\n    \"email\": \"officer3@gmail.com\",\r\n    \"password\": \"12345\"\r\n    // \"role\":\"officer\",\r\n    // \"departmentId\":\"D003\"\r\n}\r\n\r\n// {\r\n//     // \"name\": \"off3.2\",\r\n//     \"email\": \"officer3.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup3\",\r\n//     \"email\": \"sup3@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"citizen 2\",\r\n//     \"email\": \"yati1.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"officer 2.2\",\r\n//     \"email\": \"officer2.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "supervisor 3 login",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "// {\r\n//     // \"name\": \"yati\",\r\n//     \"email\": \"yati.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"super1\",\r\n//     \"email\": \"super1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\":\"Admin\",\r\n//     \"email\": \"admin@egov.com\",\r\n//     \"password\": \"Admin@123\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer1\",\r\n//     \"email\": \"officer1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"fd\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer2\",\r\n//     \"email\": \"officer2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup2\",\r\n//     \"email\": \"sup2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"off3\",\r\n//     \"email\": \"officer3@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"off3.2\",\r\n//     \"email\": \"officer3.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n{\r\n    // \"name\": \"sup3\",\r\n    \"email\": \"sup3@gmail.com\",\r\n    \"password\": \"12345\"\r\n    // \"role\":\"supervisor\",\r\n    // \"departmentId\":\"D003\"\r\n}\r\n\r\n// {\r\n//     // \"name\": \"citizen 2\",\r\n//     \"email\": \"yati1.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"officer 2.2\",\r\n//     \"email\": \"officer2.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "admin login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// const res = pm.response.json();\r",
+											"// pm.environment.set(\"admin_token\", res.token);\r",
+											"// pm.environment.set(\"admin_id\", res.userId);\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "// {\r\n//     // \"name\": \"yati\",\r\n//     \"email\": \"yati.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"super1\",\r\n//     \"email\": \"super1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n{\r\n    // \"name\":\"Admin\",\r\n    \"email\": \"admin@egov.com\",\r\n    \"password\": \"Admin@123\"\r\n    // \"role\":\"supervisor\",\r\n    // \"departmentId\":\"D001\"\r\n}\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer1\",\r\n//     \"email\": \"officer1@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"fd\",\r\n//     // \"departmentId\":\"D001\"\r\n// }\r\n\r\n\r\n// {\r\n//     // \"name\": \"officer2\",\r\n//     \"email\": \"officer2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup2\",\r\n//     \"email\": \"sup2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D002\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"off3\",\r\n//     \"email\": \"officer3@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"off3.2\",\r\n//     \"email\": \"officer3.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"sup3\",\r\n//     \"email\": \"sup3@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"supervisor\",\r\n//     // \"departmentId\":\"D003\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"citizen 2\",\r\n//     \"email\": \"yati1.amity@gmail.com\",\r\n//     \"password\": \"12345\"\r\n// }\r\n\r\n// {\r\n//     // \"name\": \"officer 2.2\",\r\n//     \"email\": \"officer2.2@gmail.com\",\r\n//     \"password\": \"12345\"\r\n//     // \"role\":\"officer\",\r\n//     // \"departmentId\":\"D002\"\r\n// }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "User(User Controller)",
+					"item": [
+						{
+							"name": "get user profile - owner and admin only",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin 1 token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "http://localhost:8080/users/{{citizen1 id}}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"users",
+										"{{citizen1 id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile - owner only any role",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"\r",
+											"const actingUser = \"citizen1\";   \r",
+											"const targetUser = \"admin\";   \r",
+											"\r",
+											"pm.environment.set(\"token\", pm.environment.get(`${actingUser}_token`));\r",
+											"pm.environment.set(\"userId\", pm.environment.get(`${targetUser}_id`));\r",
+											"\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"yati1\",\r\n  \"email\": \"yati.amity@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/users/{{userId}}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"users",
+										"{{userId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update role- admin",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"try {\r",
+											"    const response = await pm.execution.runRequest(\"44959650-f53da095-16c6-4960-af1f-321a3233ac3d\");\r",
+											"    token=response.json().token;\r",
+											"    console.log(token)\r",
+											"    // console.log(response.json());\r",
+											"} catch (err) {\r",
+											"    console.error(err);\r",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {
+											"44959650-f53da095-16c6-4960-af1f-321a3233ac3d": {
+												"workspace": "9c760705-9548-4634-84c7-e442666a0d5c",
+												"location": [
+													"E-Governance Grievance Redressal System",
+													"login - Public"
+												]
+											}
+										}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin 1 token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/users/{{citizen 2 id}}/role/citizen",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"users",
+										"{{citizen 2 id}}",
+										"role",
+										"citizen"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update dept- admin only",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{officer 1 token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/users/{{officer 1 id}}/department/D001",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"users",
+										"{{officer 1 id}}",
+										"department",
+										"D001"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Users by Role-admin",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin 1 token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/users/role/officer",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"users",
+										"role",
+										"officer"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get officers by dept - admin and supervisor",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{supervisor 3 token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/users/department/D001/officers",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"users",
+										"department",
+										"D001",
+										"officers"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Grievance",
+			"item": [
+				{
+					"name": "Reference Data - public",
+					"item": [
+						{
+							"name": "get all dept -public",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/reference/departments",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"reference",
+										"departments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Categories",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/reference/departments/D002/categories",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"reference",
+										"departments",
+										"D002",
+										"categories"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "vallidate dept-anyone",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin 1 token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/reference/departments/D004/validate",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"reference",
+										"departments",
+										"D004",
+										"validate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Grievance Controller",
+					"item": [
+						{
+							"name": "Grievance",
+							"item": [
+								{
+									"name": "create grievnce+ document",
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{citizen1 Token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "request",
+													"value": "{ \"departmentId\": \"D003\", \"categoryId\": \"C301\", \"title\": \"fsfvdgjuikoik  ada gr\",\"description\": \"dfgdfgdddeargrgfth thgfsgdgtbgffg g svtr vhtyjhbgdtg hyfgtvbvtdff\"}",
+													"contentType": "application/json",
+													"type": "text"
+												},
+												{
+													"key": "files",
+													"type": "file",
+													"src": "/D:/Minor Project/ucf101/data/UCF-101/BaseballPitch/v_BaseballPitch_g01_c01.avi"
+												}
+											]
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "create grievnce via api gateway - only bearer token reuired",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{citizenToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"departmentId\": \"D003\",\r\n    \"categoryId\": \"C304\",\r\n    \"title\": \"Pedestrian da,ages near my hosue\",\r\n    \"description\": \"Pedestrian da,ages near my hosue since  week\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "create grievance directly via 9004- add id and role in headers",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6954c63515d97d6338c0b606",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "CITIZEN",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"departmentId\": \"D001\",\r\n    \"categoryId\": \"C101\",\r\n    \"title\": \"Water leakage near my house\",\r\n    \"description\": \"Pipeline leaking since yesterday\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:9004/grievances",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "9004",
+											"path": [
+												"grievances"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get all grievances - acc to role",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 3 token }}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get  grievance by id - acc to role and dept",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{admin 1 token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/{{grievance id}}",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"{{grievance id}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get grievances by citizen id - citizen and admin",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{citizen1 Token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953ab00d73d88165fb2c0c6",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "OFFICER",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/citizen/{{citizen1 id}}",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"citizen",
+												"{{citizen1 id}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get grievance by dept id - admin and supervisor",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 2 token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953ab00d73d88165fb2c0c6",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "OFFICER",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/department/D002",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"department",
+												"D002"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "assign grievance to officer",
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{supervisor 3 token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    // \"officerId\":\"69550f2430998376fb1bee65\"\r\n     \"officerId\":\"{{officer 3 id }}\"\r\n//   \"officerId\": \"32443443123\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/{{grievance id}}/assign",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"{{grievance id}}",
+												"assign"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "move assign->in-review",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 3 token }}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953c9c1d1489376502ad4a0",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "OFFICER",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/{{grievance id}}/in-review",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"{{grievance id}}",
+												"in-review"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "move in-review->resolved",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 3 token }}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953c9c1d1489376502ad4a0",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "OFFICER",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/{{grievance id}}/resolve",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"{{grievance id}}",
+												"resolve"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "move resolved->closed",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{supervisor 2 token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953ab00d73d88165fb2c0c6",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "CITIZEN",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/{{grievance id}}/close",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"{{grievance id}}",
+												"close"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "reopen by citizen only",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{citizen1 Token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953ab00d73d88165fb2c0c6",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "CITIZEN",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/69583605cbe5f77131db8697/reopen",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"69583605cbe5f77131db8697",
+												"reopen"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "escalate by citizen only",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{citizen1 Token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953ab00d73d88165fb2c0c6",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "CITIZEN",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/6959f04df581851c6bfb0a29/escalate",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"6959f04df581851c6bfb0a29",
+												"escalate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "grievance status history - by id - rbac",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 2.2  token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "X-USER-ID",
+												"value": "6953ab00d73d88165fb2c0c6",
+												"type": "text",
+												"disabled": true
+											},
+											{
+												"key": "X-USER-ROLE",
+												"value": "OFFICER",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/{{grievance id}}/history",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"{{grievance id}}",
+												"history"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get all grievances using status and deptid - rbac only",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{supervisor 2 token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:8080/grievances?status=closed&departmentId=D003",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances"
+											],
+											"query": [
+												{
+													"key": "status",
+													"value": "closed"
+												},
+												{
+													"key": "departmentId",
+													"value": "D003"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get sla breach-grievance endpoint-rbac",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{adminToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:8080/grievances/sla-breaches",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"sla-breaches"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Grievance document",
+							"item": [
+								{
+									"name": "get all docs using grievance id",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 2.2  token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/69583605cbe5f77131db8697/documents",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"69583605cbe5f77131db8697",
+												"documents"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get/download 1 doc using grievance id",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{officer 2 token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "// {\r\n//   \"grievanceId\": \"69551049a835887c61f82828\",\r\n//   \"rating\": 4,\r\n//   \"comment\": \"Issue resolved satisfactorily\"\r\n// }\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8080/grievances/69583605cbe5f77131db8697/documents/69583605cbe5f77131db8698",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8080",
+											"path": [
+												"grievances",
+												"69583605cbe5f77131db8697",
+												"documents",
+												"69583605cbe5f77131db8698"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Feedback",
+			"item": [
+				{
+					"name": "submit feedback-citizen only",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{citizen1 Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"grievanceId\": \"{{grievance id}}\",\r\n    \"rating\": 3,\r\n    \"comment\": \"nicee\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/feedback",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"feedback"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get feedback using greivance id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{officer 1 token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\r\n//   \"grievanceId\": \"69551049a835887c61f82828\",\r\n//   \"rating\": 4,\r\n//   \"comment\": \"Issue resolved satisfactorily\"\r\n// }\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/feedback/grievance/{{grievance id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"feedback",
+								"grievance",
+								"{{grievance id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get feedback using feedback id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{officer 2.2  token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\r\n//   \"grievanceId\": \"69551049a835887c61f82828\",\r\n//   \"rating\": 4,\r\n//   \"comment\": \"Issue resolved satisfactorily\"\r\n// }\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/feedback/6958448737ce0325612e353c",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"feedback",
+								"6958448737ce0325612e353c"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reporting",
+			"item": [
+				{
+					"name": "Get grievances by status-Status Reports -officer, admin and supervisor only",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{officer 3 token }}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/grievances/status/closed",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"grievances",
+								"status",
+								"closed"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get grievances by dept-dept Reports -officer, admin and supervisor only",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{officer 3 token }}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/grievances/department/D003",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"grievances",
+								"department",
+								"D003"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "avg resolution time - min-acc to rbac",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{supervisor 2 token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/avg-resolution-time",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"avg-resolution-time"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "avg resolution time -acc to rbac dept wise",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin 1 token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/avg-resolution-time/department/D003",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"avg-resolution-time",
+								"department",
+								"D003"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Department Performance (Count by Dept)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{officer 2.2  token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/department-performance",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"department-performance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Grievance Summary-reporting - all have access",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/user/{{citizen1 id}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"user",
+								"{{citizen1 id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "public stats(home) - public",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"officer 2.2\",\r\n    \"email\": \"officer2.2@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"role\":\"officer\",\r\n    \"departmentId\":\"D002\"\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/reports/public/stats",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"public",
+								"stats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sla breach report-reporting",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin 1 token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/reports/grievances/sla-breaches",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"reports",
+								"grievances",
+								"sla-breaches"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "cipher",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/plain",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "yatig2004@gmail.com",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/encrypt",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"encrypt"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "grievance id",
+			"value": ""
+		},
+		{
+			"key": "citizen1 id",
+			"value": ""
+		},
+		{
+			"key": "citizen1 Token",
+			"value": ""
+		},
+		{
+			"key": "supervisor 1 id",
+			"value": ""
+		},
+		{
+			"key": "supervisor 1 token",
+			"value": ""
+		},
+		{
+			"key": "admin 1 id",
+			"value": ""
+		},
+		{
+			"key": "admin 1 token",
+			"value": ""
+		},
+		{
+			"key": "officer 1 id",
+			"value": ""
+		},
+		{
+			"key": "officer 1 token",
+			"value": ""
+		},
+		{
+			"key": "officer 2 id",
+			"value": ""
+		},
+		{
+			"key": "officer 2 token",
+			"value": ""
+		},
+		{
+			"key": "supervisor 2 id",
+			"value": ""
+		},
+		{
+			"key": "supervisor 2 token",
+			"value": ""
+		},
+		{
+			"key": "supervisor 3 id",
+			"value": ""
+		},
+		{
+			"key": "supervisor 3 token",
+			"value": ""
+		},
+		{
+			"key": "officer 3 id ",
+			"value": ""
+		},
+		{
+			"key": "officer 3 token ",
+			"value": ""
+		},
+		{
+			"key": "officer 3.2 id",
+			"value": ""
+		},
+		{
+			"key": "officer 3.2 token",
+			"value": ""
+		},
+		{
+			"key": "citizen 2 token ",
+			"value": ""
+		},
+		{
+			"key": "citizen 2 id",
+			"value": ""
+		},
+		{
+			"key": "officer 2.2 id",
+			"value": ""
+		},
+		{
+			"key": "officer 2.2  token",
+			"value": ""
+		}
+	]
+}
