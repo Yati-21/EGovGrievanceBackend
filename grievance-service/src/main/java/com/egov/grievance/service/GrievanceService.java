@@ -19,7 +19,6 @@ import com.egov.grievance.dto.CreateGrievanceRequest;
 import com.egov.grievance.dto.UserResponse;
 import com.egov.grievance.event.GrievanceStatusChangedEvent;
 import com.egov.grievance.exception.ServiceUnavailableException;
-import com.egov.grievance.exception.UserNotFoundException;
 import com.egov.grievance.model.GRIEVANCE_STATUS;
 import com.egov.grievance.model.Grievance;
 import com.egov.grievance.model.GrievanceDocument;
@@ -159,7 +158,7 @@ public class GrievanceService {
                                                         oldStatus,
                                                         GRIEVANCE_STATUS.ASSIGNED,
                                                         assignedBy))
-                                        .then(Mono.fromRunnable(() -> {
+                                        .then(Mono.fromRunnable(() -> 
                                             grievanceEventPublisher.publishStatusChange(
                                                     new GrievanceStatusChangedEvent(
                                                             grievanceId,
@@ -169,8 +168,8 @@ public class GrievanceService {
                                                             oldStatus.name(),
                                                             GRIEVANCE_STATUS.ASSIGNED.name(),
                                                             assignedBy,
-                                                            Instant.now()));
-                                        }));
+                                                            Instant.now()))
+                                        ));
                             }));
                 });
     }
@@ -205,7 +204,7 @@ public class GrievanceService {
                                     oldStatus,
                                     GRIEVANCE_STATUS.IN_REVIEW,
                                     officerId))
-                            .then(Mono.fromRunnable(() -> {
+                            .then(Mono.fromRunnable(() -> 
                                 grievanceEventPublisher.publishStatusChange(
                                         new GrievanceStatusChangedEvent(
                                                 grievanceId,
@@ -215,8 +214,8 @@ public class GrievanceService {
                                                 oldStatus.name(),
                                                 GRIEVANCE_STATUS.IN_REVIEW.name(),
                                                 officerId,
-                                                Instant.now()));
-                            }));
+                                                Instant.now()))
+                            ));
                 });
     }
 
@@ -257,7 +256,7 @@ public class GrievanceService {
                                     oldStatus,
                                     GRIEVANCE_STATUS.RESOLVED,
                                     officerId))
-                            .then(Mono.fromRunnable(() -> {
+                            .then(Mono.fromRunnable(() -> 
                                 grievanceEventPublisher.publishStatusChange(
                                         new GrievanceStatusChangedEvent(
                                                 grievanceId,
@@ -267,8 +266,8 @@ public class GrievanceService {
                                                 oldStatus.name(),
                                                 GRIEVANCE_STATUS.RESOLVED.name(),
                                                 officerId,
-                                                Instant.now()));
-                            }));
+                                                Instant.now()))
+                            ));
                 });
     }
 
@@ -305,7 +304,7 @@ public class GrievanceService {
                                     oldStatus,
                                     GRIEVANCE_STATUS.CLOSED,
                                     userId))
-                            .then(Mono.fromRunnable(() -> {
+                            .then(Mono.fromRunnable(() -> 
                                 grievanceEventPublisher.publishStatusChange(
                                         new GrievanceStatusChangedEvent(
                                                 grievanceId,
@@ -315,8 +314,8 @@ public class GrievanceService {
                                                 oldStatus.name(),
                                                 GRIEVANCE_STATUS.CLOSED.name(),
                                                 userId,
-                                                Instant.now()));
-                            }));
+                                                Instant.now()))
+                            ));
                 });
     }
 
@@ -367,7 +366,7 @@ public class GrievanceService {
                                     oldStatus,
                                     GRIEVANCE_STATUS.REOPENED,
                                     citizenId))
-                            .then(Mono.fromRunnable(() -> {
+                            .then(Mono.fromRunnable(() -> 
                                 grievanceEventPublisher.publishStatusChange(
                                         new GrievanceStatusChangedEvent(
                                                 grievanceId,
@@ -377,8 +376,8 @@ public class GrievanceService {
                                                 oldStatus.name(),
                                                 GRIEVANCE_STATUS.REOPENED.name(),
                                                 citizenId,
-                                                Instant.now()));
-                            }));
+                                                Instant.now()))
+                            ));
                 });
     }
 
@@ -443,7 +442,7 @@ public class GrievanceService {
                                                                     oldStatus,
                                                                     GRIEVANCE_STATUS.ESCALATED,
                                                                     citizenId))
-                                                    .then(Mono.fromRunnable(() -> {
+                                                    .then(Mono.fromRunnable(() -> 
                                                         grievanceEventPublisher.publishStatusChange(
                                                                 new GrievanceStatusChangedEvent(
                                                                         grievanceId,
@@ -453,8 +452,8 @@ public class GrievanceService {
                                                                         oldStatus.name(),
                                                                         GRIEVANCE_STATUS.ESCALATED.name(),
                                                                         citizenId,
-                                                                        Instant.now()));
-                                                    }));
+                                                                        Instant.now()))
+                                                    ));
                                         });
                             });
                 });

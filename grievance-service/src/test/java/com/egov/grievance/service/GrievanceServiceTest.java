@@ -63,7 +63,6 @@ class GrievanceServiceTest {
 	@BeforeEach
 	void setup() {
 		lenient().when(cbFactory.create(anyString())).thenReturn(cb);
-
 		lenient().when(cb.run(any(Mono.class), any())).thenAnswer(inv -> inv.getArgument(0));
 	}
 
@@ -83,12 +82,12 @@ class GrievanceServiceTest {
 		req.setDescription("Pipe");
 
 		when(referenceDataService.validateDepartmentAndCategory(any(), any())).thenReturn(Mono.empty());
-
 		when(grievanceRepository.save(any())).thenAnswer(inv -> {
 			Grievance g = inv.getArgument(0);
 			g.setId("G1");
 			return Mono.just(g);
 		});
+		
 		when(historyService.createInitialHistory("G1", "U1")).thenReturn(Mono.just("G1"));
 		StepVerifier.create(service.createGrievance("U1", "CITIZEN", req, Flux.empty())).expectNext("G1")
 				.verifyComplete();
@@ -100,8 +99,6 @@ class GrievanceServiceTest {
 		StepVerifier.create(service.createGrievance("U1", "ADMIN", new CreateGrievanceRequest(), Flux.empty()))
 				.expectError(IllegalArgumentException.class).verify();
 	}
-
-	// ---------------- ASSIGN ----------------
 
 	@Test
 	void assignGrievance_adminSuccess() {
@@ -121,8 +118,6 @@ class GrievanceServiceTest {
 		StepVerifier.create(service.assignGrievance("G1", "U1", "CITIZEN", "O1"))
 				.expectError(IllegalArgumentException.class).verify();
 	}
-
-	// ---------------- MARK IN REVIEW ----------------
 
 	@Test
 	void markInReview_success() {

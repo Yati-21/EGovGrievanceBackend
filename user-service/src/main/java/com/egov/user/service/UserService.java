@@ -1,11 +1,11 @@
 package com.egov.user.service;
 
 import java.time.Instant;
-import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 
 import com.egov.user.dto.LoginRequest;
@@ -27,6 +27,9 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class UserService {
+
+    @Value("${app.default-admin-password}")
+    private String defaultAdminPassword;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -109,7 +112,7 @@ public class UserService {
                     User admin = User.builder()
                             .name("Admin")
                             .email("admin@egov.com")
-                            .passwordHash(passwordEncoder.encode("Admin@123"))
+                            .passwordHash(passwordEncoder.encode(defaultAdminPassword))
                             .role(ROLE.ADMIN)
                             .createdAt(Instant.now())
                             .build();
