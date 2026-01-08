@@ -231,6 +231,7 @@ services:
 
 volumes:
   mongodata:
+    name: mongo_data
 
 networks:
   egov-network:
